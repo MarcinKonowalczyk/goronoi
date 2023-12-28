@@ -1,4 +1,4 @@
-package main
+package shutil
 
 import (
 	"log"
@@ -79,4 +79,65 @@ func LinkShaders(shaders []Shader) ShaderProgram {
 
 func (sp ShaderProgram) Use() {
 	gl.UseProgram(sp.program)
+}
+
+type Uniform struct {
+	name  string
+	utype uint32
+	size  int32
+}
+
+func (sp ShaderProgram) GetActiveUniforms() []Uniform {
+	num_uniforms := int32(0)
+	gl.GetProgramiv(sp.program, gl.ACTIVE_UNIFORMS, &num_uniforms)
+
+	if num_uniforms == 0 {
+		return []Uniform{}
+	}
+
+	uniforms := make([]Uniform, num_uniforms)
+
+	for i := int32(0); i < num_uniforms; i++ {
+		var name_len int32
+		var size int32
+		var gl_type uint32
+		name_null := make([]uint8, 256)
+		gl.GetActiveUniform(sp.program, uint32(i), 256, &name_len, &size, &gl_type, &name_null[0])
+		name := string(name_null[:name_len])
+		uniforms[i] = Uniform{name, gl_type, size}
+	}
+
+	return uniforms
+}
+
+func (sp ShaderProgram) SetUniform1f(name string, x float32) {
+	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid uniform name", name)
+	}
+	gl.Uniform1f(location, x)
+
+	// read back the uniform value and check it
+	var value float32
+	gl.GetUniformfv(sp.program, location, &value)
+
+	if value != x {
+		log.Fatalln("Uniform value was not set correctly")
+	}
+}
+
+func (sp ShaderProgram) SetUniform2f(name string, x, y float32) {
+	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid uniform name", name)
+	}
+	gl.Uniform2f(location, x, y)
+
+	// read back the uniform value and check it
+	var value [2]float32
+	gl.GetUniformfv(sp.program, location, &value[0])
+
+	if value[0] != x || value[1] != y {
+		log.Fatalln("Uniform value was not set correctly")
+	}
 }
