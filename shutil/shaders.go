@@ -10,26 +10,21 @@ import (
 type getGlParam func(uint32, uint32, *int32)
 type getInfoLog func(uint32, int32, *int32, *uint8)
 
-func checkGlError(glObject uint32, errorParam uint32, getParamFn getGlParam,
-	getInfoLogFn getInfoLog, failMsg string) {
+func checkGlError(
+	glObject uint32,
+	errorParam uint32,
+	getParamFn getGlParam,
+	getInfoLogFn getInfoLog) string {
 
 	var success int32
 	getParamFn(glObject, errorParam, &success)
 	if success != 1 {
 		var infoLog [512]byte
 		getInfoLogFn(glObject, 512, nil, (*uint8)(unsafe.Pointer(&infoLog)))
-		log.Fatalln(failMsg, "\n", string(infoLog[:512]))
+		message := string(infoLog[:512])
+		return message
 	}
-}
-
-func checkShaderCompileErrors(shader uint32) {
-	checkGlError(shader, gl.COMPILE_STATUS, gl.GetShaderiv, gl.GetShaderInfoLog,
-		"ERROR::SHADER::COMPILE_FAILURE")
-}
-
-func checkProgramLinkErrors(program uint32) {
-	checkGlError(program, gl.LINK_STATUS, gl.GetProgramiv, gl.GetProgramInfoLog,
-		"ERROR::PROGRAM::LINKING_FAILURE")
+	return ""
 }
 
 type Shader struct {
@@ -46,11 +41,16 @@ const (
 // Compile the provided shader source and return the shader object.
 func CompileShader(source string, shader_type ShaderType) Shader {
 	program := gl.CreateShader(uint32(shader_type))
-	source_chars, free_func := gl.Strs(source)
+	source_chars, free_func := gl.Strs(source + "\x00")
 	defer free_func()
 	gl.ShaderSource(program, 1, source_chars, nil)
 	gl.CompileShader(program)
-	checkShaderCompileErrors(program)
+	message := checkGlError(program, gl.COMPILE_STATUS, gl.GetShaderiv, gl.GetShaderInfoLog)
+
+	if message != "" {
+		log.Fatalln("ERROR::SHADER::COMPILATION_FAILED. Source:\n", source, "\n", message)
+	}
+
 	return Shader{program}
 }
 
@@ -67,7 +67,10 @@ func LinkShaders(shaders []Shader) ShaderProgram {
 		gl.AttachShader(program, shader.program)
 	}
 	gl.LinkProgram(program)
-	checkProgramLinkErrors(program)
+	message := checkGlError(program, gl.LINK_STATUS, gl.GetProgramiv, gl.GetProgramInfoLog)
+	if message != "" {
+		log.Fatalln("ERROR::PROGRAM::LINKING_FAILURE\n", message)
+	}
 
 	// shader objects are not needed after they are linked into a program object
 	for _, shader := range shaders {
@@ -79,6 +82,10 @@ func LinkShaders(shaders []Shader) ShaderProgram {
 
 func (sp ShaderProgram) Use() {
 	gl.UseProgram(sp.program)
+}
+
+func (sp ShaderProgram) Delete() {
+	gl.DeleteProgram(sp.program)
 }
 
 type Uniform struct {

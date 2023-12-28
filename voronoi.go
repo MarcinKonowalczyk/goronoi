@@ -50,6 +50,9 @@ func main() {
 
 	window.SetKeyCallback(keyCallback)
 
+	// Set window size callback
+	window.SetSizeCallback(windowSizeCallback)
+
 	// Cap the framerate at 60fps
 	glfw.SwapInterval(1)
 
@@ -70,6 +73,7 @@ func programLoop(window *glfw.Window) {
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
 	shaderProgram := shutil.LinkShaders(shaders)
+	defer shaderProgram.Delete()
 
 	quad_vertices := []float32{
 		0.9, 0.9, 0.0,
@@ -80,51 +84,46 @@ func programLoop(window *glfw.Window) {
 
 	quad := shutil.CreateVAO(quad_vertices)
 
+	// We don't need to bind anything here because we only have one VAO
+	quad.Bind()
+
 	// Scale the resolution to the monitor's content scale
 	// This is necessary for retina displays
 	monitor := glfw.GetPrimaryMonitor()
 	scale_x, scale_y := monitor.GetContentScale()
 
-	// active_uniforms := shaderProgram.GetActiveUniforms()
-	// fmt.Println("Active Uniforms:")
-	// for _, uniform := range active_uniforms {
-	// 	fmt.Println(uniform)
-	// }
-
 	shaderProgram.Use()
-	shaderProgram.SetUniform2f("u_resolution", float32(windowWidth*scale_x), float32(windowHeight*scale_y))
-	shaderProgram.SetUniform2f("u_mouse", float32(0.0), float32(0.0))
-	shaderProgram.SetUniform1f("u_time", 0.0)
 
-	var mouse_x, mouse_y float32
+	// Augment the windowSizeCallback to update the resolution uniform
+	newWindowSizeCallback := func(window *glfw.Window, width int, height int) {
+		windowSizeCallback(window, width, height)
+		scale_x, scale_y := window.GetContentScale()
+		f32_width := float32(float32(width) * scale_x)
+		f32_height := float32(float32(height) * scale_y)
+		shaderProgram.SetUniform2f("u_resolution", f32_width, f32_height)
+	}
+	window.SetSizeCallback(newWindowSizeCallback)
+	newWindowSizeCallback(window, windowWidth, windowHeight)
+
+	setMouseUniform(window, shaderProgram, scale_x, scale_y)
+	setTimeUniform(shaderProgram)
 
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()
 
 		// Get current mouse position
-		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
-		mouse_x = float32(mouse_x_f64)
-		mouse_y = float32(mouse_y_f64)
+		setMouseUniform(window, shaderProgram, scale_x, scale_y)
+		setTimeUniform(shaderProgram)
 
-		// Get current time
-		time := glfw.GetTime()
-
-		// Set uniforms
-		shaderProgram.SetUniform2f("u_mouse", float32(mouse_x*scale_x), float32(mouse_y*scale_y))
-		shaderProgram.SetUniform1f("u_time", float32(time))
-
-		// perform rendering
-		gl.ClearColor(0.2, 0.5, 0.5, 1.0)
+		// Set the color to clear the screen with
+		gl.ClearColor(0.137, 0.137, 0.137, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		// draw loop
-		quad.Bind()
+		// NOTE: We're not calling quad.Bund and Unbind here because we only have one VAO
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-		quad.Unbind()
-		// end of draw loop
 
-		// swap in the rendered buffer
+		// Swap in the rendered buffer
 		window.SwapBuffers()
 	}
 }
@@ -137,4 +136,27 @@ func keyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Ac
 	if key == glfw.KeyEscape && action == glfw.Press {
 		window.SetShouldClose(true)
 	}
+}
+
+func windowSizeCallback(window *glfw.Window, width int, height int) {
+	scale_x, scale_y := window.GetContentScale()
+	gl.Viewport(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
+}
+
+// Set the mouse coordinates uniform. We assume that the shader program is already in use.
+func setMouseUniform(
+	window *glfw.Window,
+	shaderProgram shutil.ShaderProgram,
+	scale_x float32,
+	scale_y float32,
+) {
+	mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
+	mouse_x := float32(mouse_x_f64 * float64(scale_x))
+	mouse_y := float32(mouse_y_f64 * float64(scale_y))
+	shaderProgram.SetUniform2f("u_mouse", mouse_x, mouse_y)
+}
+
+func setTimeUniform(shaderProgram shutil.ShaderProgram) {
+	time := glfw.GetTime()
+	shaderProgram.SetUniform1f("u_time", float32(time))
 }
