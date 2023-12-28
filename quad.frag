@@ -49,7 +49,12 @@ void main()
 
     // Iterate through the points positions
     for (int i = 0; i < 5; i++) {
+        // L1 norm
+        // float dist = abs(st.x-point[i].x) + abs(st.y-point[i].y);
+        // L2 norm
         float dist = distance(st, point[i]);
+        // L infinite norm
+        // float dist = max(abs(st.x-point[i].x),abs(st.y-point[i].y));
 
         // Keep the closer distance
         m_dist = min(m_dist, dist);
