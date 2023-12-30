@@ -114,12 +114,12 @@ func NewTextRenderer(font *truetype.Font, size float64) TextRenderer {
 	// The VBO will be updated for each character
 
 	vertices := []float32{
-		0.9, 0.9, 0.0,
-		0.9, -0.9, 0.0,
-		-0.9, 0.9, 0.0,
-		-0.9, -0.9, 0.0,
+		0.9, 0.9, 0.0, 0.0,
+		0.9, -0.9, 0.0, 0.0,
+		-0.9, 0.9, 0.0, 0.0,
+		-0.9, -0.9, 0.0, 0.0,
 	}
-	vao := CreateVAO(vertices, 3)
+	vao := CreateVAO(vertices, 4)
 
 	return TextRenderer{
 		program: program,
@@ -139,8 +139,8 @@ func (t *TextRenderer) RenderText(text string, pos [2]float32, screen_size [2]fl
 		(pos[1] + 1) / 2 * screen_size[1],
 	}
 
-	screen_width := screen_size[0]
-	screen_height := screen_size[1]
+	sw2 := screen_size[0] / 2
+	sh2 := screen_size[1] / 2
 
 	// Activate corresponding render state
 	t.program.Use()
@@ -174,26 +174,35 @@ func (t *TextRenderer) RenderText(text string, pos [2]float32, screen_size [2]fl
 		width := float32(glyph.width) * scale
 		height := float32(glyph.height) * scale
 
-		// fmt.Printf("xpos: %f, ypos: %f, width: %f, height: %f\n", xpos, ypos, width, height)
+		fmt.Printf("xpos: %f, ypos: %f, width: %f, height: %f\n", xpos, ypos, width, height)
+		fmt.Printf("sw2: %f, sh2: %f\n", sw2, sh2)
 
 		// Calculate the relative position of the glyph in -1 to 1 coordinates
-		// a_vertices := []float32{
-		// 	xpos, ypos, 0.0,
-		// 	xpos, (ypos + height), 0.0,
-		// 	(xpos + width), ypos, 0.0,
-		// 	(xpos + width), (ypos + height), 0.0,
-		// }
 
+		// order: bottom left, top left, bottom right, top right
+		// x, y, tex_x, tex_y
 		vertices := []float32{
-			(xpos - screen_width/2) / (screen_width / 2), (ypos - screen_height/2) / (screen_height / 2), 0.0,
-			(xpos - screen_width/2) / (screen_width / 2), (ypos + height - screen_height/2) / (screen_height / 2), 0.0,
-			(xpos + width - screen_width/2) / (screen_width / 2), (ypos - screen_height/2) / (screen_height / 2), 0.0,
-			(xpos + width - screen_width/2) / (screen_width / 2), (ypos + height - screen_height/2) / (screen_height / 2),
+			// bottom left
+			(xpos - sw2) / sw2,
+			(ypos - sh2) / sh2,
+			0.0, 0.0,
+			// top left
+			(xpos - sw2) / sw2,
+			(ypos - sh2 + height) / sh2,
+			0.0, 1.0,
+			// bottom right
+			(xpos - sw2 + width) / sw2,
+			(ypos - sh2) / sh2,
+			1.0, 0.0,
+			// top right
+			(xpos + width - sw2) / sw2,
+			(ypos + height - sh2) / sh2,
+			1.0, 1.0,
 		}
 
 		t.vao.BufferData(vertices)
 
-		// fmt.Println(vertices)
+		fmt.Println(vertices)
 
 		// Render the glyph
 		gl.BindTexture(gl.TEXTURE_2D, glyph.texture)

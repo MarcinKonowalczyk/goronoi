@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font/gofont/goregular"
 
 	_ "embed"
 )
@@ -21,12 +23,6 @@ var vertexShaderSource string
 
 //go:embed quad.frag
 var fragmentShaderSource string
-
-//go:embed test.vert
-var testVertexShaderSource string
-
-//go:embed test.frag
-var testFragmentShaderSource string
 
 func init() {
 	// GLFW event handling must be run on the main OS thread
@@ -72,46 +68,21 @@ func main() {
 	glfw.SwapInterval(1)
 
 	// Load the font
-	// font, err := truetype.Parse(goregular.TTF)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// // Create the text renderer
-	// // make sure the NewTextRenderer is called in the same thread as the OpenGL context
-	// text_renderer := shutil.NewTextRenderer(font, 36)
-
-	// // // Render 'hello world' to the top left of the screen
-	// text_renderer.RenderText(
-	// 	"Quick brown fox jumps over the lazy dog",
-	// 	[2]float32{-0.98, 0},
-	// 	[2]float32{float32(windowWidth), float32(windowHeight)},
-	// )
-
-	testShaders := []shutil.Shader{
-		shutil.CompileShader(testVertexShaderSource, gl.VERTEX_SHADER),
-		shutil.CompileShader(testFragmentShaderSource, gl.FRAGMENT_SHADER),
-	}
-	testShaderProgram := shutil.LinkShaders(testShaders)
-	defer testShaderProgram.Delete()
-
-	testShaderProgram.Use()
-
-	// x,y position and r,g color
-	// order: bottom left, top left, bottom right, top right
-	verties := []float32{
-		-0.9, -0.9, 1.0, 0.0,
-		-0.9, 0.9, 0.0, 1.0,
-		0.9, -0.9, 0.0, 0.0,
-		0.9, 0.9, 1.0, 1.0,
+	font, err := truetype.Parse(goregular.TTF)
+	if err != nil {
+		panic(err)
 	}
 
-	quad := shutil.CreateVAO(verties, 4)
+	// Create the text renderer
+	// make sure the NewTextRenderer is called in the same thread as the OpenGL context
+	text_renderer := shutil.NewTextRenderer(font, 36)
 
-	quad.Bind()
-
-	// Draw the quad
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	// // Render 'hello world' to the top left of the screen
+	text_renderer.RenderText(
+		"Quick brown fox jumps over the lazy dog",
+		[2]float32{-0.98, 0},
+		[2]float32{float32(windowWidth), float32(windowHeight)},
+	)
 
 	window.SwapBuffers() // Swap the rendered buffer with the window
 	dummyLoop(window)
