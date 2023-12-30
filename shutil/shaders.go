@@ -133,18 +133,68 @@ func (sp ShaderProgram) SetUniform1f(name string, x float32) {
 	}
 }
 
-func (sp ShaderProgram) SetUniform2f(name string, x, y float32) {
+func (sp ShaderProgram) SetUniform2f(name string, vec [2]float32) {
 	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
 	if location == -1 {
 		log.Fatalln("Invalid uniform name", name)
 	}
-	gl.Uniform2f(location, x, y)
+	gl.Uniform2f(location, vec[0], vec[1])
 
 	// read back the uniform value and check it
 	var value [2]float32
 	gl.GetUniformfv(sp.program, location, &value[0])
 
-	if value[0] != x || value[1] != y {
+	if value[0] != vec[0] || value[1] != vec[1] {
+		log.Fatalln("Uniform value was not set correctly")
+	}
+}
+
+func (sp ShaderProgram) SetUniform3f(name string, vec [3]float32) {
+	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid uniform name", name)
+	}
+	gl.Uniform3f(location, vec[0], vec[1], vec[2])
+
+	// read back the uniform value and check it
+	var value [3]float32
+	gl.GetUniformfv(sp.program, location, &value[0])
+
+	if value[0] != vec[0] || value[1] != vec[1] || value[2] != vec[2] {
+		log.Fatalln("Uniform value was not set correctly")
+	}
+}
+
+func (sp ShaderProgram) SetUniform4f(name string, vec [4]float32) {
+	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid uniform name", name)
+	}
+
+	gl.Uniform4f(location, vec[0], vec[1], vec[2], vec[3])
+
+	// read back the uniform value and check it
+	var value [4]float32
+	gl.GetUniformfv(sp.program, location, &value[0])
+
+	if value[0] != vec[0] || value[1] != vec[1] || value[2] != vec[2] || value[3] != vec[3] {
+		log.Fatalln("Uniform value was not set correctly")
+	}
+}
+
+func (sp ShaderProgram) SetUniform1i(name string, x int32) {
+	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid uniform name", name)
+	}
+
+	gl.Uniform1i(location, x)
+
+	// read back the uniform value and check it
+	var value int32
+	gl.GetUniformiv(sp.program, location, &value)
+
+	if value != x {
 		log.Fatalln("Uniform value was not set correctly")
 	}
 }

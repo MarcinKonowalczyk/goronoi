@@ -7,9 +7,13 @@ import (
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font/gofont/goregular"
 
 	_ "embed"
 )
+
+// const fontfile = "luxisr.ttf"
 
 const windowWidth = 800
 const windowHeight = 600
@@ -48,6 +52,9 @@ func main() {
 		panic(err)
 	}
 
+	// Initialize gl in the shutil package
+	shutil.Init()
+
 	window.SetKeyCallback(keyCallback)
 
 	// Set window size callback
@@ -56,7 +63,26 @@ func main() {
 	// Cap the framerate at 60fps
 	glfw.SwapInterval(1)
 
-	programLoop(window)
+	// Load the font
+	font, err := truetype.Parse(goregular.TTF)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create the text renderer
+	// make sure the NewTextRenderer is called in the same thread as the OpenGL context
+	text_renderer := shutil.NewTextRenderer(font, 36)
+
+	// // Render 'hello world' to the top left of the screen
+	text_renderer.RenderText(
+		"Quick brown fox jumps over the lazy dog",
+		[2]float32{-0.98, 0},
+		[2]float32{float32(windowWidth), float32(windowHeight)},
+	)
+
+	window.SwapBuffers() // Swap the rendered buffer with the window
+	dummyLoop(window)
+	// programLoop(window, text_renderer)
 }
 
 func compileShaders() []shutil.Shader {
@@ -69,7 +95,7 @@ func compileShaders() []shutil.Shader {
 	return []shutil.Shader{vertexShader, fragmentShader}
 }
 
-func programLoop(window *glfw.Window) {
+func programLoop(window *glfw.Window, text_renderer shutil.TextRenderer) {
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
 	shaderProgram := shutil.LinkShaders(shaders)
@@ -82,7 +108,7 @@ func programLoop(window *glfw.Window) {
 		-0.9, -0.9, 0.0,
 	}
 
-	quad := shutil.CreateVAO(quad_vertices)
+	quad := shutil.CreateVAO(quad_vertices, 3)
 
 	// We don't need to bind anything here because we only have one VAO
 	quad.Bind()
@@ -100,7 +126,7 @@ func programLoop(window *glfw.Window) {
 		scale_x, scale_y := window.GetContentScale()
 		f32_width := float32(float32(width) * scale_x)
 		f32_height := float32(float32(height) * scale_y)
-		shaderProgram.SetUniform2f("u_resolution", f32_width, f32_height)
+		shaderProgram.SetUniform2f("u_resolution", [2]float32{f32_width, f32_height})
 	}
 	window.SetSizeCallback(newWindowSizeCallback)
 	newWindowSizeCallback(window, windowWidth, windowHeight)
@@ -125,6 +151,13 @@ func programLoop(window *glfw.Window) {
 
 		// Swap in the rendered buffer
 		window.SwapBuffers()
+	}
+}
+
+// Dummy loop that just polls events and does nothing else. Useful for testing.
+func dummyLoop(window *glfw.Window) {
+	for !window.ShouldClose() {
+		glfw.PollEvents()
 	}
 }
 
@@ -153,7 +186,7 @@ func setMouseUniform(
 	mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
 	mouse_x := float32(mouse_x_f64 * float64(scale_x))
 	mouse_y := float32(mouse_y_f64 * float64(scale_y))
-	shaderProgram.SetUniform2f("u_mouse", mouse_x, mouse_y)
+	shaderProgram.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 }
 
 func setTimeUniform(shaderProgram shutil.ShaderProgram) {
