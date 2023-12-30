@@ -9,7 +9,8 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
-	// gl.Enable(gl.BLEND)
-	// gl.Enable(gl.SCISSOR_TEST)
-	// gl.BlendEquation(gl.FUNC_ADD)
+	gl.Enable(gl.BLEND)
+	gl.Enable(gl.SCISSOR_TEST)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.BlendEquation(gl.FUNC_ADD)
 }
