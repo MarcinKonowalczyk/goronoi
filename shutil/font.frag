@@ -2,16 +2,6 @@
 
 uniform vec4 u_color;
 
-// void main()
-// {
-
-//     vec4 text_color = vec4(1.0, 0.0, 0.0, 1.0);
-
-//     vec4 sampled = vec4(1.0, 0.0, 0.0, texture(u_texture, vec2(0.0, 0.0)).r);
-//     out_color = sampled * text_color;
-// }
-
-
 in vec2 TexCoords;
 out vec4 color;
 

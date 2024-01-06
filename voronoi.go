@@ -1,14 +1,18 @@
 package main
 
 import (
+	"fmt"
+	"image"
 	"log"
 	"runtime"
+	"unsafe"
 	"voronoi/shutil"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/math/fixed"
 
 	_ "embed"
 )
@@ -23,6 +27,12 @@ var vertexShaderSource string
 
 //go:embed quad.frag
 var fragmentShaderSource string
+
+//go:embed test.vert
+var testVertexShaderSource string
+
+//go:embed test.frag
+var testFragmentShaderSource string
 
 func init() {
 	// GLFW event handling must be run on the main OS thread
@@ -73,16 +83,78 @@ func main() {
 		panic(err)
 	}
 
-	// Create the text renderer
-	// make sure the NewTextRenderer is called in the same thread as the OpenGL context
-	text_renderer := shutil.NewTextRenderer(font, 36)
+	// // Create the text renderer
+	// // make sure the NewTextRenderer is called in the same thread as the OpenGL context
+	// text_renderer := shutil.NewTextRenderer(font, 36)
 
-	// // Render 'hello world' to the top left of the screen
-	text_renderer.RenderText(
-		"Quick brown fox jumps over the lazy dog",
-		[2]float32{-0.98, 0},
-		[2]float32{float32(windowWidth), float32(windowHeight)},
-	)
+	// // // Render 'hello world' to the top left of the screen
+	// text_renderer.RenderText(
+	// 	"Quick brown fox jumps over the lazy dog",
+	// 	[2]float32{-0.98, 0},
+	// 	[2]float32{float32(windowWidth), float32(windowHeight)},
+	// )
+
+	testShaders := []shutil.Shader{
+		shutil.CompileShader(testVertexShaderSource, gl.VERTEX_SHADER),
+		shutil.CompileShader(testFragmentShaderSource, gl.FRAGMENT_SHADER),
+	}
+
+	testShaderProgram := shutil.LinkShaders(testShaders)
+	defer testShaderProgram.Delete()
+
+	testShaderProgram.Use()
+
+	// Make a face
+	face := truetype.NewFace(font, &truetype.Options{
+		Size: 1,
+		DPI:  10,
+	})
+	// Make a glyph
+	dot := fixed.P(0, 0)
+	dr, mask, _, _, ok := face.Glyph(dot, 'A')
+	if !ok {
+		panic("failed to get glyph")
+	}
+	// Create a texture for the glyph
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	fmt.Println("texture", texture)
+
+	// Set the texture as active
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	// Set the texture parameters
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE) // set texture wrapping to GL_REPEAT (default wrapping method)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST) // set texture filtering (options: GL_LINEAR, GL_NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+	// Print glyph mask
+	fmt.Println("mask", mask)
+
+	// Upload the glyph to the texture
+	pixels_unsafe_pointer := unsafe.Pointer(&mask.(*image.Alpha).Pix[0])
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(dr.Dx()), int32(dr.Dy()), 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels_unsafe_pointer)
+
+	// order: bottom left, top left, bottom right, top right
+	vertices := []float32{
+		-0.9, -0.9, 0.0, 0.0,
+		-0.9, 0.9, 0.0, 1.0,
+		0.9, -0.9, 1.0, 0.0,
+		0.9, 0.9, 1.0, 1.0,
+	}
+
+	// Create a VAO
+	vao := shutil.CreateVAO(vertices, 4)
+
+	// Bind the VAO
+	vao.Bind()
+
+	gl.ClearColor(0.137, 0.137, 0.137, 1.0)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 	window.SwapBuffers() // Swap the rendered buffer with the window
 	dummyLoop(window)
