@@ -78,6 +78,11 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	defer f.vertex_array.Unbind()
 	defer gl.BindTexture(gl.TEXTURE_2D, 0)
 
+	// Set blending options
+	// gl.Enable(gl.BLEND)
+	// gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	// defer gl.Disable(gl.BLEND)
+
 	// Iterate through all characters in string
 	for i := range indices {
 

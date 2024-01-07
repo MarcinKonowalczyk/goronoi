@@ -122,6 +122,7 @@ func (sp ShaderProgram) GetActiveUniforms() []Uniform {
 }
 
 func (sp ShaderProgram) GetAttribLocation(name string) uint32 {
+	sp.Use()
 	location := gl.GetAttribLocation(sp.program, gl.Str(name+"\x00"))
 	if location == -1 {
 		log.Fatalln("Invalid attribute name", name)
@@ -130,6 +131,7 @@ func (sp ShaderProgram) GetAttribLocation(name string) uint32 {
 }
 
 func (sp ShaderProgram) GetUniformLocation(name string) uint32 {
+	sp.Use()
 	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
 	if location == -1 {
 		log.Fatalln("Invalid uniform name", name)
@@ -159,7 +161,7 @@ func (sp ShaderProgram) SetUniform2f(name string, vec [2]float32) {
 	gl.GetUniformfv(sp.program, location, &value[0])
 
 	if value[0] != vec[0] || value[1] != vec[1] {
-		log.Fatalln("Uniform value was not set correctly")
+		log.Fatalf("Uniform value was not set correctly: %v != %v", value, vec)
 	}
 }
 

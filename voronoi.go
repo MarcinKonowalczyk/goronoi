@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"runtime"
 	"voronoi/shutil"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/gofont/gomono"
 
 	_ "embed"
 )
@@ -67,7 +66,7 @@ func main() {
 
 	// Load the font
 
-	font, err := shutil.LoadFontBytes(goregular.TTF, int32(52), windowWidth, windowHeight)
+	font, err := shutil.LoadFontBytes(gomono.TTF, int32(32), windowWidth, windowHeight)
 	if err != nil {
 		log.Panicf("LoadFont: %v", err)
 	}
@@ -75,21 +74,21 @@ func main() {
 	font.UpdateResolution(windowWidth, windowHeight)
 	oldWindowSizeCallback := window.SetSizeCallback(nil)
 	newSizeCallback := func(window *glfw.Window, width int, height int) {
-		fmt.Println("New window size:", width, height)
+		// fmt.Println("New window size:", width, height)
 		oldWindowSizeCallback(window, width, height)
 		font.UpdateResolution(width, height)
 	}
 	window.SetSizeCallback(newSizeCallback)
 
-	gl.ClearColor(0.137, 0.137, 0.137, 1.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	// gl.ClearColor(0.137, 0.137, 0.137, 1.0)
+	// gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	font.SetColor(1.0, 0.0, 0.0, 1.0)                                                                //r,g,b,a font color
 	font.Printf(10, windowHeight-10, 10, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.") //x,y,scale,string,printf args
 
-	window.SwapBuffers() // Swap the rendered buffer with the window
-	dummyLoop(window)
-	// programLoop(window, text_renderer)
+	// window.SwapBuffers() // Swap the rendered buffer with the window
+	// dummyLoop(window)
+	programLoop(window, font)
 }
 
 func compileShaders() []shutil.Shader {
@@ -102,7 +101,7 @@ func compileShaders() []shutil.Shader {
 	return []shutil.Shader{vertexShader, fragmentShader}
 }
 
-func programLoop(window *glfw.Window) {
+func programLoop(window *glfw.Window, font *shutil.Font) {
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
 	shaderProgram := shutil.LinkShaders(shaders)
@@ -140,25 +139,37 @@ func programLoop(window *glfw.Window) {
 	newWindowSizeCallback(window, windowWidth, windowHeight)
 
 	setMouseUniform(window, shaderProgram, scale_x, scale_y)
-	setTimeUniform(shaderProgram)
+
+	frame := uint32(0)
+	setTimeUniform(shaderProgram, frame)
 
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()
-
-		// Get current mouse position
-		setMouseUniform(window, shaderProgram, scale_x, scale_y)
-		setTimeUniform(shaderProgram)
+		shaderProgram.Use()
+		quad.Bind()
 
 		// Set the color to clear the screen with
 		gl.ClearColor(0.137, 0.137, 0.137, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
+		// Get current mouse position
+		setMouseUniform(window, shaderProgram, scale_x, scale_y)
+		setTimeUniform(shaderProgram, frame)
+
 		// NOTE: We're not calling quad.Bund and Unbind here because we only have one VAO
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
+		// Draw the text
+		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
+		mouse_rounded_x := float32(float64(int(mouse_x_f64*10)) / 10)
+		mouse_rounded_y := float32(float64(int(mouse_y_f64*10)) / 10)
+		font.Printf(10, windowHeight-10, 0.5, "Mouse: %v, %v. Frame: %v", mouse_rounded_x, mouse_rounded_y, frame)
+
 		// Swap in the rendered buffer
 		window.SwapBuffers()
+
+		frame++
 	}
 }
 
@@ -182,6 +193,7 @@ func keyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Ac
 func windowSizeCallback(window *glfw.Window, width int, height int) {
 	scale_x, scale_y := window.GetContentScale()
 	gl.Viewport(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
+	gl.Scissor(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
 }
 
 // Set the mouse coordinates uniform. We assume that the shader program is already in use.
@@ -197,7 +209,13 @@ func setMouseUniform(
 	shaderProgram.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 }
 
-func setTimeUniform(shaderProgram shutil.ShaderProgram) {
-	time := glfw.GetTime()
-	shaderProgram.SetUniform1f("u_time", float32(time))
+func setTimeUniform(shaderProgram shutil.ShaderProgram, frame uint32) {
+	var time float32
+	if frame == 0 {
+		time = 0.0
+	} else {
+		time = float32(glfw.GetTime())
+	}
+	shaderProgram.SetUniform1f("u_time", time)
+	shaderProgram.SetUniform1i("u_frame", int32(frame))
 }

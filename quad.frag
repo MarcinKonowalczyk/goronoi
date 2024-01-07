@@ -5,6 +5,7 @@ out vec4 out_color;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
+uniform int u_frame;
 
 float easeInOutCubic(float x);
 vec3 inferno(float t);
@@ -31,6 +32,7 @@ void main()
     float dummy0 = u_resolution.x;
     float dummy1 = u_time;
     float dummy2 = u_mouse.x;
+    float dummy3 = u_frame;
 
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
     vec2 mouse = u_mouse/u_resolution;
