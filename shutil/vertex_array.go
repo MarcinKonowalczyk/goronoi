@@ -53,8 +53,8 @@ func (va VartexArray) Unbind() {
 
 // Send new data to the VAO.
 func (va VartexArray) BufferData(vertices []float32) {
-	gl.BindVertexArray(va.vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbo)
+	defer gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
 	// Read the data back to make sure it was written correctly

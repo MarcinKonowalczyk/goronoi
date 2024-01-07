@@ -57,7 +57,7 @@ func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32)
 func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
 	f.program.Use()
 	defer f.program.Unuse()
-	f.program.SetUniform2f("resolution", [2]float32{float32(windowWidth), float32(windowHeight)})
+	f.program.SetUniform2f("u_resolution", [2]float32{float32(windowWidth), float32(windowHeight)})
 }
 
 // Printf draws a string to the screen, takes a list of arguments like printf
@@ -105,6 +105,7 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 		ypos := y - float32(ch.height-ch.bearingV)*scale
 		w := float32(ch.width) * scale
 		h := float32(ch.height) * scale
+
 		// order: bottom left, top left, bottom right, top right
 		vertices := []float32{
 			xpos, ypos, 0.0, 0.0,
