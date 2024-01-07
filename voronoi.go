@@ -115,7 +115,7 @@ func programLoop(window *glfw.Window) {
 		-0.9, -0.9, 0.0,
 	}
 
-	quad := shutil.CreateVAO(quad_vertices, 3)
+	quad := shutil.CreateVertexArray(quad_vertices, 3)
 
 	// We don't need to bind anything here because we only have one VAO
 	quad.Bind()

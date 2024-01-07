@@ -15,12 +15,12 @@ import (
 
 // A Font allows rendering of text to an OpenGL context.
 type Font struct {
-	fontChar map[rune]*character
-	ttf      *truetype.Font
-	scale    int32
-	vao      VAO
-	vbo      uint32
-	program  ShaderProgram
+	fontChar     map[rune]*character
+	ttf          *truetype.Font
+	scale        int32
+	vertex_array VartexArray
+	// vbo          uint32
+	program ShaderProgram
 }
 
 type character struct {
@@ -152,10 +152,10 @@ func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high
 	}
 
 	// Configure VAO/VBO for texture quads
-	gl.GenVertexArrays(1, &f.vao.id)
-	gl.GenBuffers(1, &f.vbo)
-	gl.BindVertexArray(f.vao.id)
-	gl.BindBuffer(gl.ARRAY_BUFFER, f.vbo)
+	gl.GenVertexArrays(1, &f.vertex_array.vao)
+	gl.GenBuffers(1, &f.vertex_array.vbo)
+	gl.BindVertexArray(f.vertex_array.vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.vbo)
 
 	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)
 

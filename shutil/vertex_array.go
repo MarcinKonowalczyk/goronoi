@@ -6,15 +6,15 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-type VAO struct {
-	id   uint32
+type VartexArray struct {
+	vao  uint32
 	vbo  uint32
 	size int32
 }
 
 // Create a Vertex Array Object (VAO) for the given vertices.
 // Returns the VAO ID.
-func CreateVAO(vertices []float32, size int32) VAO {
+func CreateVertexArray(vertices []float32, size int32) VartexArray {
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 
@@ -36,25 +36,25 @@ func CreateVAO(vertices []float32, size int32) VAO {
 	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
 	gl.BindVertexArray(0)
 
-	return VAO{
-		id:   vao,
+	return VartexArray{
+		vao:  vao,
 		vbo:  vbo,
 		size: size,
 	}
 }
 
-func (vao VAO) Bind() {
-	gl.BindVertexArray(vao.id)
+func (va VartexArray) Bind() {
+	gl.BindVertexArray(va.vao)
 }
 
-func (vao VAO) Unbind() {
+func (va VartexArray) Unbind() {
 	gl.BindVertexArray(0)
 }
 
 // Send new data to the VAO.
-func (vao VAO) BufferData(vertices []float32) {
-	gl.BindVertexArray(vao.id)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vao.vbo)
+func (va VartexArray) BufferData(vertices []float32) {
+	gl.BindVertexArray(va.vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
 	// Read the data back to make sure it was written correctly

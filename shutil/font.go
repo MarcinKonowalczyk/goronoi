@@ -74,8 +74,8 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	defer f.program.Unuse()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	f.vao.Bind()
-	defer f.vao.Unbind()
+	f.vertex_array.Bind()
+	defer f.vertex_array.Unbind()
 	defer gl.BindTexture(gl.TEXTURE_2D, 0)
 	defer f.program.Unuse()
 
@@ -118,11 +118,12 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 
 		// Render glyph texture over quad
 		gl.BindTexture(gl.TEXTURE_2D, ch.textureID)
-		// Update content of VBO memory
-		gl.BindBuffer(gl.ARRAY_BUFFER, f.vbo)
+		// // Update content of VBO memory
+		// gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.vbo)
 
-		// BufferSubData(target Enum, offset int, data []byte)
-		gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertices)*4, gl.Ptr(vertices)) // Be sure to use glBufferSubData and not glBufferData
+		// // BufferSubData(target Enum, offset int, data []byte)
+		// gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertices)*4, gl.Ptr(vertices)) // Be sure to use glBufferSubData and not glBufferData
+		f.vertex_array.BufferData(vertices)
 		// Render quad
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
