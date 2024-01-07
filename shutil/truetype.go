@@ -1,11 +1,10 @@
-package glfont
+package shutil
 
 import (
 	"fmt"
 	"image"
 	"image/draw"
 	"io"
-	"io/ioutil"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/golang/freetype"
@@ -21,7 +20,7 @@ type Font struct {
 	scale    int32
 	vao      uint32
 	vbo      uint32
-	program  uint32
+	program  ShaderProgram
 	texture  uint32 // Holds the glyph texture id.
 	color    color
 }
@@ -129,8 +128,8 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 }
 
 // LoadTrueTypeFont builds OpenGL buffers and glyph textures based on a ttf file
-func LoadTrueTypeFont(program uint32, r io.Reader, scale int32, low, high rune, dir Direction) (*Font, error) {
-	data, err := ioutil.ReadAll(r)
+func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high rune, dir Direction) (*Font, error) {
+	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -162,14 +161,14 @@ func LoadTrueTypeFont(program uint32, r io.Reader, scale int32, low, high rune, 
 
 	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)
 
-	vertAttrib := uint32(gl.GetAttribLocation(f.program, gl.Str("vert\x00")))
+	vertAttrib := program.GetAttribLocation("vert")
 	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointer(vertAttrib, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
+	gl.VertexAttribPointerWithOffset(vertAttrib, 2, gl.FLOAT, false, 4*4, 0)
 	defer gl.DisableVertexAttribArray(vertAttrib)
 
-	texCoordAttrib := uint32(gl.GetAttribLocation(f.program, gl.Str("vertTexCoord\x00")))
+	texCoordAttrib := program.GetAttribLocation("vertTexCoord")
 	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointer(texCoordAttrib, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 4*4, 2*4)
 	defer gl.DisableVertexAttribArray(texCoordAttrib)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)

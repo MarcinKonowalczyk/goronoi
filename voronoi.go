@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"runtime"
-	"voronoi/glfont"
 	"voronoi/shutil"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -75,16 +75,25 @@ func main() {
 
 	// Load the font
 
-	font, err := glfont.LoadFontBytes(goregular.TTF, int32(52), windowWidth, windowHeight)
+	font, err := shutil.LoadFontBytes(goregular.TTF, int32(52), windowWidth, windowHeight)
 	if err != nil {
 		log.Panicf("LoadFont: %v", err)
 	}
 
+	font.UpdateResolution(windowWidth, windowHeight)
+	oldWindowSizeCallback := window.SetSizeCallback(nil)
+	newSizeCallback := func(window *glfw.Window, width int, height int) {
+		fmt.Println("New window size:", width, height)
+		oldWindowSizeCallback(window, width, height)
+		font.UpdateResolution(width, height)
+	}
+	window.SetSizeCallback(newSizeCallback)
+
 	gl.ClearColor(0.137, 0.137, 0.137, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	font.SetColor(1.0, 1.0, 1.0, 1.0)                                                      //r,g,b,a font color
-	font.Printf(100, 100, 1.0, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.") //x,y,scale,string,printf args
+	font.SetColor(1.0, 0.0, 0.0, 1.0)                                                                //r,g,b,a font color
+	font.Printf(10, windowHeight-10, 10, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.") //x,y,scale,string,printf args
 
 	window.SwapBuffers() // Swap the rendered buffer with the window
 	dummyLoop(window)
@@ -101,7 +110,7 @@ func compileShaders() []shutil.Shader {
 	return []shutil.Shader{vertexShader, fragmentShader}
 }
 
-func programLoop(window *glfw.Window, text_renderer shutil.TextRenderer) {
+func programLoop(window *glfw.Window) {
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
 	shaderProgram := shutil.LinkShaders(shaders)
@@ -127,8 +136,9 @@ func programLoop(window *glfw.Window, text_renderer shutil.TextRenderer) {
 	shaderProgram.Use()
 
 	// Augment the windowSizeCallback to update the resolution uniform
+	oldWindowSizeCallback := window.SetSizeCallback(nil)
 	newWindowSizeCallback := func(window *glfw.Window, width int, height int) {
-		windowSizeCallback(window, width, height)
+		oldWindowSizeCallback(window, width, height)
 		scale_x, scale_y := window.GetContentScale()
 		f32_width := float32(float32(width) * scale_x)
 		f32_height := float32(float32(height) * scale_y)

@@ -1,4 +1,4 @@
-package glfont
+package shutil
 
 import (
 	"bytes"
@@ -25,27 +25,66 @@ type color struct {
 	a float32
 }
 
-// Use default preapration for exported functions like `LoadFont` and `LoadFontFromBytes`
-func configureDefaults(windowWidth int, windowHeight int) uint32 {
-	// Configure the default font vertex and fragment shaders
-	program, err := newProgram(vertexFontShader, fragmentFontShader)
-	if err != nil {
-		panic(err)
+var fragmentFontShader = `#version 150 core
+in vec2 fragTexCoord;
+out vec4 outputColor;
+
+uniform sampler2D tex;
+uniform vec4 textColor;
+
+void main()
+{    
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(tex, fragTexCoord).r);
+    outputColor = textColor * sampled;
+}` + "\x00"
+
+var vertexFontShader = `#version 150 core
+
+//vertex position
+in vec2 vert;
+
+//pass through to fragTexCoord
+in vec2 vertTexCoord;
+
+//window res
+uniform vec2 resolution;
+
+//pass to frag
+out vec2 fragTexCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = vert / resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   fragTexCoord = vertTexCoord;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+}` + "\x00"
+
+func newFontProgram(windowWidth int, windowHeight int) ShaderProgram {
+	shaders := []Shader{
+		CompileShader(vertexFontShader, VERTEX_SHADER),
+		CompileShader(fragmentFontShader, FRAGMENT_SHADER),
 	}
 
-	// Activate corresponding render state
-	gl.UseProgram(program)
-
-	// set screen resolution
-	resUniform := gl.GetUniformLocation(program, gl.Str("resolution\x00"))
-	gl.Uniform2f(resUniform, float32(windowWidth), float32(windowHeight))
-
-	return program
+	return LinkShaders(shaders)
 }
+
+// // Activate corresponding render state
+
+// // set screen resolution
+// resUniform := gl.GetUniformLocation(program, gl.Str("resolution\x00"))
+// gl.Uniform2f(resUniform, float32(windowWidth), float32(windowHeight))
 
 // LoadFontBytes loads the specified font bytes at the given scale.
 func LoadFontBytes(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
-	program := configureDefaults(windowWidth, windowHeight)
+	program := newFontProgram(windowWidth, windowHeight)
 
 	fd := bytes.NewReader(buf)
 	return LoadTrueTypeFont(program, fd, scale, 32, 127, LeftToRight)
@@ -59,7 +98,7 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 	}
 	defer fd.Close()
 
-	program := configureDefaults(windowWidth, windowHeight)
+	program := newFontProgram(windowWidth, windowHeight)
 
 	return LoadTrueTypeFont(program, fd, scale, 32, 127, LeftToRight)
 }
@@ -74,10 +113,9 @@ func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32)
 
 // UpdateResolution used to recalibrate fonts for new window size
 func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
-	gl.UseProgram(f.program)
-	resUniform := gl.GetUniformLocation(f.program, gl.Str("resolution\x00"))
-	gl.Uniform2f(resUniform, float32(windowWidth), float32(windowHeight))
-	gl.UseProgram(0)
+	f.program.Use()
+	defer f.program.Unuse()
+	f.program.SetUniform2f("resolution", [2]float32{float32(windowWidth), float32(windowHeight)})
 }
 
 // Printf draws a string to the screen, takes a list of arguments like printf
@@ -94,9 +132,11 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	// Activate corresponding render state
-	gl.UseProgram(f.program)
+	f.program.Use()
+	defer f.program.Unuse()
 	// set text color
-	gl.Uniform4f(gl.GetUniformLocation(f.program, gl.Str("textColor\x00")), f.color.r, f.color.g, f.color.b, f.color.a)
+	// gl.Uniform4f(gl.GetUniformLocation(f.program, gl.Str("textColor\x00")), f.color.r, f.color.g, f.color.b, f.color.a)
+	f.program.SetUniform4f("textColor", [4]float32{f.color.r, f.color.g, f.color.b, f.color.a})
 	// set screen resolution
 	// resUniform := gl.GetUniformLocation(f.program, gl.Str("resolution\x00"))
 	// gl.Uniform2f(resUniform, float32(2560), float32(1440))

@@ -84,6 +84,10 @@ func (sp ShaderProgram) Use() {
 	gl.UseProgram(sp.program)
 }
 
+func (sp ShaderProgram) Unuse() {
+	gl.UseProgram(0)
+}
+
 func (sp ShaderProgram) Delete() {
 	gl.DeleteProgram(sp.program)
 }
@@ -117,11 +121,24 @@ func (sp ShaderProgram) GetActiveUniforms() []Uniform {
 	return uniforms
 }
 
-func (sp ShaderProgram) SetUniform1f(name string, x float32) {
+func (sp ShaderProgram) GetAttribLocation(name string) uint32 {
+	location := gl.GetAttribLocation(sp.program, gl.Str(name+"\x00"))
+	if location == -1 {
+		log.Fatalln("Invalid attribute name", name)
+	}
+	return uint32(location)
+}
+
+func (sp ShaderProgram) GetUniformLocation(name string) uint32 {
 	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
 	if location == -1 {
 		log.Fatalln("Invalid uniform name", name)
 	}
+	return uint32(location)
+}
+
+func (sp ShaderProgram) SetUniform1f(name string, x float32) {
+	location := int32(sp.GetUniformLocation(name))
 	gl.Uniform1f(location, x)
 
 	// read back the uniform value and check it
@@ -134,10 +151,7 @@ func (sp ShaderProgram) SetUniform1f(name string, x float32) {
 }
 
 func (sp ShaderProgram) SetUniform2f(name string, vec [2]float32) {
-	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
-	if location == -1 {
-		log.Fatalln("Invalid uniform name", name)
-	}
+	location := int32(sp.GetUniformLocation(name))
 	gl.Uniform2f(location, vec[0], vec[1])
 
 	// read back the uniform value and check it
@@ -150,10 +164,7 @@ func (sp ShaderProgram) SetUniform2f(name string, vec [2]float32) {
 }
 
 func (sp ShaderProgram) SetUniform3f(name string, vec [3]float32) {
-	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
-	if location == -1 {
-		log.Fatalln("Invalid uniform name", name)
-	}
+	location := int32(sp.GetUniformLocation(name))
 	gl.Uniform3f(location, vec[0], vec[1], vec[2])
 
 	// read back the uniform value and check it
@@ -166,11 +177,7 @@ func (sp ShaderProgram) SetUniform3f(name string, vec [3]float32) {
 }
 
 func (sp ShaderProgram) SetUniform4f(name string, vec [4]float32) {
-	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
-	if location == -1 {
-		log.Fatalln("Invalid uniform name", name)
-	}
-
+	location := int32(sp.GetUniformLocation(name))
 	gl.Uniform4f(location, vec[0], vec[1], vec[2], vec[3])
 
 	// read back the uniform value and check it
@@ -183,11 +190,7 @@ func (sp ShaderProgram) SetUniform4f(name string, vec [4]float32) {
 }
 
 func (sp ShaderProgram) SetUniform1i(name string, x int32) {
-	location := gl.GetUniformLocation(sp.program, gl.Str(name+"\x00"))
-	if location == -1 {
-		log.Fatalln("Invalid uniform name", name)
-	}
-
+	location := int32(sp.GetUniformLocation(name))
 	gl.Uniform1i(location, x)
 
 	// read back the uniform value and check it
