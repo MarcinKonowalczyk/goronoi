@@ -77,7 +77,6 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	f.vertex_array.Bind()
 	defer f.vertex_array.Unbind()
 	defer gl.BindTexture(gl.TEXTURE_2D, 0)
-	defer f.program.Unuse()
 
 	// Iterate through all characters in string
 	for i := range indices {
@@ -95,7 +94,7 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 			ch, ok = f.fontChar[runeIndex]
 		}
 
-		// skip runes that are not in font chacter range
+		// skip runes that are not in font character range
 		if !ok {
 			fmt.Printf("%c %d\n", runeIndex, runeIndex)
 			continue
@@ -106,28 +105,17 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 		ypos := y - float32(ch.height-ch.bearingV)*scale
 		w := float32(ch.width) * scale
 		h := float32(ch.height) * scale
+		// order: bottom left, top left, bottom right, top right
 		vertices := []float32{
-			xpos + w, ypos, 1.0, 0.0,
 			xpos, ypos, 0.0, 0.0,
-			xpos, ypos + h, 0.0, 1.0,
-
+			xpos + w, ypos, 1.0, 0.0,
 			xpos, ypos + h, 0.0, 1.0,
 			xpos + w, ypos + h, 1.0, 1.0,
-			xpos + w, ypos, 1.0, 0.0,
 		}
 
-		// Render glyph texture over quad
 		gl.BindTexture(gl.TEXTURE_2D, ch.textureID)
-		// // Update content of VBO memory
-		// gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.vbo)
-
-		// // BufferSubData(target Enum, offset int, data []byte)
-		// gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertices)*4, gl.Ptr(vertices)) // Be sure to use glBufferSubData and not glBufferData
 		f.vertex_array.BufferData(vertices)
-		// Render quad
-		gl.DrawArrays(gl.TRIANGLES, 0, 6)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 		x += float32((ch.advance >> 6)) * scale
 	}
 
