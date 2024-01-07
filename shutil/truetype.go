@@ -18,7 +18,7 @@ type Font struct {
 	fontChar map[rune]*character
 	ttf      *truetype.Font
 	scale    int32
-	vao      uint32
+	vao      VAO
 	vbo      uint32
 	program  ShaderProgram
 }
@@ -126,7 +126,7 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 }
 
 // LoadTrueTypeFont builds OpenGL buffers and glyph textures based on a ttf file
-func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high rune, dir Direction) (*Font, error) {
+func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high rune) (*Font, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -152,9 +152,9 @@ func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high
 	}
 
 	// Configure VAO/VBO for texture quads
-	gl.GenVertexArrays(1, &f.vao)
+	gl.GenVertexArrays(1, &f.vao.id)
 	gl.GenBuffers(1, &f.vbo)
-	gl.BindVertexArray(f.vao)
+	gl.BindVertexArray(f.vao.id)
 	gl.BindBuffer(gl.ARRAY_BUFFER, f.vbo)
 
 	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)

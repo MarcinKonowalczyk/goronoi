@@ -10,16 +10,6 @@ import (
 	_ "embed"
 )
 
-// Direction represents the direction in which strings should be rendered.
-type Direction uint8
-
-// Known directions.
-const (
-	LeftToRight Direction = iota // E.g.: Latin
-	RightToLeft                  // E.g.: Arabic
-	TopToBottom                  // E.g.: Chinese
-)
-
 //go:embed font.frag
 var fragmentFontShader string
 
@@ -35,18 +25,12 @@ func newFontProgram(windowWidth int, windowHeight int) ShaderProgram {
 	return LinkShaders(shaders)
 }
 
-// // Activate corresponding render state
-
-// // set screen resolution
-// resUniform := gl.GetUniformLocation(program, gl.Str("resolution\x00"))
-// gl.Uniform2f(resUniform, float32(windowWidth), float32(windowHeight))
-
 // LoadFontBytes loads the specified font bytes at the given scale.
 func LoadFontBytes(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
 	program := newFontProgram(windowWidth, windowHeight)
 
 	fd := bytes.NewReader(buf)
-	return LoadTrueTypeFont(program, fd, scale, 32, 127, LeftToRight)
+	return LoadTrueTypeFont(program, fd, scale, 32, 127)
 }
 
 // LoadFont loads the specified font at the given scale.
@@ -59,7 +43,7 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 
 	program := newFontProgram(windowWidth, windowHeight)
 
-	return LoadTrueTypeFont(program, fd, scale, 32, 127, LeftToRight)
+	return LoadTrueTypeFont(program, fd, scale, 32, 127)
 }
 
 // SetColor allows you to set the text color to be used when you draw the text
@@ -90,8 +74,8 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	defer f.program.Unuse()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindVertexArray(f.vao)
-	defer gl.BindVertexArray(0)
+	f.vao.Bind()
+	defer f.vao.Unbind()
 	defer gl.BindTexture(gl.TEXTURE_2D, 0)
 	defer f.program.Unuse()
 
