@@ -13,8 +13,6 @@ import (
 	_ "embed"
 )
 
-// const fontfile = "luxisr.ttf"
-
 const windowWidth = 800
 const windowHeight = 600
 
@@ -23,12 +21,6 @@ var vertexShaderSource string
 
 //go:embed quad.frag
 var fragmentShaderSource string
-
-//go:embed test.vert
-var testVertexShaderSource string
-
-//go:embed test.frag
-var testFragmentShaderSource string
 
 func init() {
 	// GLFW event handling must be run on the main OS thread

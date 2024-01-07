@@ -93,10 +93,6 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 		return nil
 	}
 
-	// setup blending mode
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 	// Activate corresponding render state
 	f.program.Use()
 	defer f.program.Unuse()
