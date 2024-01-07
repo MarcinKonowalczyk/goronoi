@@ -21,8 +21,6 @@ type Font struct {
 	vao      uint32
 	vbo      uint32
 	program  ShaderProgram
-	texture  uint32 // Holds the glyph texture id.
-	color    color
 }
 
 type character struct {
@@ -55,7 +53,7 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 		char := new(character)
 
 		gBnd, gAdv, ok := ttfFace.GlyphBounds(ch)
-		if ok != true {
+		if !ok {
 			return fmt.Errorf("ttf face glyphBounds error")
 		}
 

@@ -20,13 +20,6 @@ const (
 	TopToBottom                  // E.g.: Chinese
 )
 
-type color struct {
-	r float32
-	g float32
-	b float32
-	a float32
-}
-
 //go:embed font.frag
 var fragmentFontShader string
 
@@ -71,10 +64,9 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 
 // SetColor allows you to set the text color to be used when you draw the text
 func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32) {
-	f.color.r = red
-	f.color.g = green
-	f.color.b = blue
-	f.color.a = alpha
+	f.program.Use()
+	defer f.program.Unuse()
+	f.program.SetUniform4f("textColor", [4]float32{red, green, blue, alpha})
 }
 
 // UpdateResolution used to recalibrate fonts for new window size
@@ -96,15 +88,12 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 	// Activate corresponding render state
 	f.program.Use()
 	defer f.program.Unuse()
-	// set text color
-	// gl.Uniform4f(gl.GetUniformLocation(f.program, gl.Str("textColor\x00")), f.color.r, f.color.g, f.color.b, f.color.a)
-	f.program.SetUniform4f("textColor", [4]float32{f.color.r, f.color.g, f.color.b, f.color.a})
-	// set screen resolution
-	// resUniform := gl.GetUniformLocation(f.program, gl.Str("resolution\x00"))
-	// gl.Uniform2f(resUniform, float32(2560), float32(1440))
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindVertexArray(f.vao)
+	defer gl.BindVertexArray(0)
+	defer gl.BindTexture(gl.TEXTURE_2D, 0)
+	defer f.program.Unuse()
 
 	// Iterate through all characters in string
 	for i := range indices {
@@ -151,19 +140,11 @@ func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{
 		// BufferSubData(target Enum, offset int, data []byte)
 		gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertices)*4, gl.Ptr(vertices)) // Be sure to use glBufferSubData and not glBufferData
 		// Render quad
-		gl.DrawArrays(gl.TRIANGLES, 0, 16)
+		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
 		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		// Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-		x += float32((ch.advance >> 6)) * scale // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
-
+		x += float32((ch.advance >> 6)) * scale
 	}
-
-	// clear opengl textures and programs
-	gl.BindVertexArray(0)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
-	gl.UseProgram(0)
-	gl.Disable(gl.BLEND)
 
 	return nil
 }
