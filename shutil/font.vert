@@ -1,9 +1,28 @@
-#version 330 core
-layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
-out vec2 TexCoords;
+#version 150 core
 
-void main()
-{
-    gl_Position = vec4(vertex.xy, 0.0, 1.0);
-    TexCoords = vertex.zw;
-}  
+//vertex position
+in vec2 vert;
+
+//pass through to fragTexCoord
+in vec2 vertTexCoord;
+
+//window res
+uniform vec2 resolution;
+
+//pass to frag
+out vec2 fragTexCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = vert / resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   fragTexCoord = vertTexCoord;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+}
