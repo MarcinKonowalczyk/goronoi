@@ -43,7 +43,14 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 
 	program := newFontProgram(windowWidth, windowHeight)
 
-	return LoadTrueTypeFont(program, fd, scale, 32, 127)
+	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
+	if err != nil {
+		return nil, err
+	}
+
+	f.UpdateResolution(windowWidth, windowHeight)
+
+	return f, nil
 }
 
 // SetColor allows you to set the text color to be used when you draw the text
@@ -58,16 +65,22 @@ func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
 	f.program.Use()
 	defer f.program.Unuse()
 	f.program.SetUniform2f("u_resolution", [2]float32{float32(windowWidth), float32(windowHeight)})
+	f.windowWidth = windowWidth
+	f.windowHeight = windowHeight
 }
 
 // Printf draws a string to the screen, takes a list of arguments like printf
-func (f *Font) Printf(x, y float32, scale float32, fs string, argv ...interface{}) error {
+func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...interface{}) error {
 
 	indices := []rune(fmt.Sprintf(fs, argv...))
 
 	if len(indices) == 0 {
 		return nil
 	}
+
+	// *_norm is the normalized * position of the text in the range [-1, 1]
+	x := (x_norm + 1) / 2 * float32(f.windowWidth)
+	y := (y_norm + 1) / 2 * float32(f.windowHeight)
 
 	// Activate corresponding render state
 	f.program.Use()

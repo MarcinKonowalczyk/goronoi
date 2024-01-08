@@ -80,14 +80,6 @@ func main() {
 	}
 	window.SetSizeCallback(newSizeCallback)
 
-	// gl.ClearColor(0.137, 0.137, 0.137, 1.0)
-	// gl.Clear(gl.COLOR_BUFFER_BIT)
-
-	font.SetColor(1.0, 0.0, 0.0, 1.0)                                                                //r,g,b,a font color
-	font.Printf(10, windowHeight-10, 10, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.") //x,y,scale,string,printf args
-
-	// window.SwapBuffers() // Swap the rendered buffer with the window
-	// dummyLoop(window)
 	programLoop(window, font)
 }
 
@@ -143,6 +135,8 @@ func programLoop(window *glfw.Window, font *shutil.Font) {
 	frame := uint32(0)
 	setTimeUniform(shaderProgram, frame)
 
+	font.SetColor(1.0, 1.0, 1.0, 0.8)
+
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()
@@ -164,7 +158,7 @@ func programLoop(window *glfw.Window, font *shutil.Font) {
 		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
 		mouse_rounded_x := float32(float64(int(mouse_x_f64*10)) / 10)
 		mouse_rounded_y := float32(float64(int(mouse_y_f64*10)) / 10)
-		font.Printf(10, windowHeight-10, 0.5, "Mouse: %v, %v. Frame: %v", mouse_rounded_x, mouse_rounded_y, frame)
+		font.Printf(-0.98, 0.98, 0.5, "Mouse: %v, %v. Frame: %v", mouse_rounded_x, mouse_rounded_y, frame)
 
 		// Swap in the rendered buffer
 		window.SwapBuffers()

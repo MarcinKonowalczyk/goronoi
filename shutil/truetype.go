@@ -19,8 +19,9 @@ type Font struct {
 	ttf          *truetype.Font
 	scale        int32
 	vertex_array VartexArray
-	// vbo          uint32
-	program ShaderProgram
+	program      ShaderProgram
+	windowWidth  int
+	windowHeight int
 }
 
 type character struct {
