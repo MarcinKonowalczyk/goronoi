@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"voronoi/glu"
 	"voronoi/glu/font"
+	"voronoi/glu/widget"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -137,6 +138,8 @@ func programLoop(window *glfw.Window, font *font.Font) {
 
 	font.SetColor(1.0, 1.0, 1.0, 0.8)
 
+	widget := widget.NewWidget(windowWidth, windowHeight)
+
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()
@@ -157,6 +160,9 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		// Draw the text
 		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
 		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x_f64, mouse_y_f64, frame)
+
+		// Draw the widget
+		widget.Draw()
 
 		// Swap in the rendered buffer
 		window.SwapBuffers()
