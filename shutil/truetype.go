@@ -22,6 +22,7 @@ type Font struct {
 	program      ShaderProgram
 	windowWidth  int
 	windowHeight int
+	color        [4]float32
 }
 
 type character struct {

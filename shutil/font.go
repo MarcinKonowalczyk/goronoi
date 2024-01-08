@@ -49,6 +49,7 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 	}
 
 	f.UpdateResolution(windowWidth, windowHeight)
+	f.SetColor(1.0, 1.0, 1.0, 1.0) // Set the default color to white
 
 	return f, nil
 }
@@ -57,7 +58,9 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32) {
 	f.program.Use()
 	defer f.program.Unuse()
-	f.program.SetUniform4f("textColor", [4]float32{red, green, blue, alpha})
+	color := [4]float32{red, green, blue, alpha}
+	f.program.SetUniform4f("textColor", color)
+	f.color = color
 }
 
 // UpdateResolution used to recalibrate fonts for new window size
