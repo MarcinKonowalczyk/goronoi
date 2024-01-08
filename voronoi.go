@@ -156,9 +156,7 @@ func programLoop(window *glfw.Window, font *shutil.Font) {
 
 		// Draw the text
 		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
-		mouse_rounded_x := float32(float64(int(mouse_x_f64*10)) / 10)
-		mouse_rounded_y := float32(float64(int(mouse_y_f64*10)) / 10)
-		font.Printf(-0.98, 0.98, 0.5, "Mouse: %v, %v. Frame: %v", mouse_rounded_x, mouse_rounded_y, frame)
+		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x_f64, mouse_y_f64, frame)
 
 		// Swap in the rendered buffer
 		window.SwapBuffers()
