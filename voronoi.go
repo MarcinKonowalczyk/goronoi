@@ -67,7 +67,7 @@ func main() {
 
 	// Load the font
 
-	font, err := font.LoadFontBytes(gomono.TTF, int32(32), windowWidth, windowHeight)
+	font, err := font.NewFont(gomono.TTF, int32(32), windowWidth, windowHeight)
 	if err != nil {
 		log.Panicf("LoadFont: %v", err)
 	}
@@ -101,15 +101,14 @@ func programLoop(window *glfw.Window, font *font.Font) {
 	defer shaderProgram.Delete()
 
 	quad_vertices := []float32{
-		0.9, 0.9, 0.0,
-		0.9, -0.9, 0.0,
-		-0.9, 0.9, 0.0,
-		-0.9, -0.9, 0.0,
+		0.9, 0.9,
+		0.9, -0.9,
+		-0.9, 0.9,
+		-0.9, -0.9,
 	}
 
-	quad := glu.CreateVertexArray(quad_vertices, 3)
-
-	// We don't need to bind anything here because we only have one VAO
+	quad := glu.NewVertexArray(2)
+	quad.BufferData(quad_vertices)
 	quad.Bind()
 
 	// Scale the resolution to the monitor's content scale
@@ -141,12 +140,12 @@ func programLoop(window *glfw.Window, font *font.Font) {
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()
+		glu.ClearColor(0.0, 0.0, 0.0, 1.0)
+
 		shaderProgram.Use()
 		quad.Bind()
 
 		// Set the color to clear the screen with
-		gl.ClearColor(0.137, 0.137, 0.137, 1.0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		// Get current mouse position
 		setMouseUniform(window, shaderProgram, scale_x, scale_y)

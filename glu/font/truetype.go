@@ -146,8 +146,7 @@ func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, 
 	f.fontChar = make(map[rune]*character)
 	f.ttf = ttf
 	f.scale = scale
-	f.program = program            //set shader program
-	f.SetColor(1.0, 1.0, 1.0, 1.0) //set default white
+	f.program = program //set shader program
 
 	err = f.GenerateGlyphs(low, high)
 	if err != nil {
@@ -160,7 +159,7 @@ func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, 
 	gl.BindVertexArray(f.vertex_array.Vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.Vbo)
 
-	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)
+	// gl.BufferData(gl.ARRAY_BUFFER, 0*4*4, nil, gl.STATIC_DRAW)
 
 	vertAttrib := program.GetAttribLocation("vert")
 	gl.EnableVertexAttribArray(vertAttrib)

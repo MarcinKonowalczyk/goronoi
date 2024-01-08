@@ -3,7 +3,6 @@ package font
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -12,38 +11,25 @@ import (
 )
 
 //go:embed font.frag
-var fragmentFontShader string
+var fontFragmentShaderSource string
 
 //go:embed font.vert
-var vertexFontShader string
+var fontVertexShaderSource string
 
 func newFontProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
 	shaders := []glu.Shader{
-		glu.CompileShader(vertexFontShader, glu.VERTEX_SHADER),
-		glu.CompileShader(fragmentFontShader, glu.FRAGMENT_SHADER),
+		glu.CompileShader(fontVertexShaderSource, glu.VERTEX_SHADER),
+		glu.CompileShader(fontFragmentShaderSource, glu.FRAGMENT_SHADER),
 	}
 
 	return glu.LinkShaders(shaders)
 }
 
-// LoadFontBytes loads the specified font bytes at the given scale.
-func LoadFontBytes(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
+// Loads the specified font bytes at the given scale.
+func NewFont(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
 	program := newFontProgram(windowWidth, windowHeight)
 
 	fd := bytes.NewReader(buf)
-	return LoadTrueTypeFont(program, fd, scale, 32, 127)
-}
-
-// LoadFont loads the specified font at the given scale.
-func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Font, error) {
-	fd, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-
-	program := newFontProgram(windowWidth, windowHeight)
-
 	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
 	if err != nil {
 		return nil, err
@@ -54,6 +40,27 @@ func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Fon
 
 	return f, nil
 }
+
+// // LoadFont loads the specified font at the given scale.
+// func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Font, error) {
+// 	fd, err := os.Open(file)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer fd.Close()
+
+// 	program := newFontProgram(windowWidth, windowHeight)
+
+// 	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	f.UpdateResolution(windowWidth, windowHeight)
+// 	f.SetColor(1.0, 1.0, 1.0, 1.0) // Set the default color to white
+
+// 	return f, nil
+// }
 
 // SetColor allows you to set the text color to be used when you draw the text
 func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32) {
