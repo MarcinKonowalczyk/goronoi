@@ -172,7 +172,7 @@ func (f *Font) Width(scale float32, fs string, argv ...interface{}) float32 {
 			ch, ok = f.fontChar[runeIndex]
 		}
 
-		// skip runes that are not in font chacter range
+		// skip runes that are not in font character range
 		if !ok {
 			fmt.Printf("%c %d\n", runeIndex, runeIndex)
 			continue
