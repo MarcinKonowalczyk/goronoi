@@ -1,9 +1,10 @@
-package shutil
+package font
 
 import (
 	"bytes"
 	"fmt"
 	"os"
+	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 
@@ -16,13 +17,13 @@ var fragmentFontShader string
 //go:embed font.vert
 var vertexFontShader string
 
-func newFontProgram(windowWidth int, windowHeight int) ShaderProgram {
-	shaders := []Shader{
-		CompileShader(vertexFontShader, VERTEX_SHADER),
-		CompileShader(fragmentFontShader, FRAGMENT_SHADER),
+func newFontProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
+	shaders := []glu.Shader{
+		glu.CompileShader(vertexFontShader, glu.VERTEX_SHADER),
+		glu.CompileShader(fragmentFontShader, glu.FRAGMENT_SHADER),
 	}
 
-	return LinkShaders(shaders)
+	return glu.LinkShaders(shaders)
 }
 
 // LoadFontBytes loads the specified font bytes at the given scale.

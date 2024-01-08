@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 	"runtime"
-	"voronoi/shutil"
+	"voronoi/glu"
+	"voronoi/glu/font"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -53,8 +54,8 @@ func main() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.BlendEquation(gl.FUNC_ADD)
 
-	// Initialize gl in the shutil package
-	shutil.Init()
+	// Initialize gl in the glu package
+	glu.Init()
 
 	window.SetKeyCallback(keyCallback)
 
@@ -66,7 +67,7 @@ func main() {
 
 	// Load the font
 
-	font, err := shutil.LoadFontBytes(gomono.TTF, int32(32), windowWidth, windowHeight)
+	font, err := font.LoadFontBytes(gomono.TTF, int32(32), windowWidth, windowHeight)
 	if err != nil {
 		log.Panicf("LoadFont: %v", err)
 	}
@@ -83,20 +84,20 @@ func main() {
 	programLoop(window, font)
 }
 
-func compileShaders() []shutil.Shader {
+func compileShaders() []glu.Shader {
 	if vertexShaderSource == "" || fragmentShaderSource == "" {
 		panic("vertexShaderSource or fragmentShaderSource is empty")
 	}
-	vertexShader := shutil.CompileShader(vertexShaderSource, gl.VERTEX_SHADER)
-	fragmentShader := shutil.CompileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
+	vertexShader := glu.CompileShader(vertexShaderSource, gl.VERTEX_SHADER)
+	fragmentShader := glu.CompileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
 
-	return []shutil.Shader{vertexShader, fragmentShader}
+	return []glu.Shader{vertexShader, fragmentShader}
 }
 
-func programLoop(window *glfw.Window, font *shutil.Font) {
+func programLoop(window *glfw.Window, font *font.Font) {
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
-	shaderProgram := shutil.LinkShaders(shaders)
+	shaderProgram := glu.LinkShaders(shaders)
 	defer shaderProgram.Delete()
 
 	quad_vertices := []float32{
@@ -106,7 +107,7 @@ func programLoop(window *glfw.Window, font *shutil.Font) {
 		-0.9, -0.9, 0.0,
 	}
 
-	quad := shutil.CreateVertexArray(quad_vertices, 3)
+	quad := glu.CreateVertexArray(quad_vertices, 3)
 
 	// We don't need to bind anything here because we only have one VAO
 	quad.Bind()
@@ -191,7 +192,7 @@ func windowSizeCallback(window *glfw.Window, width int, height int) {
 // Set the mouse coordinates uniform. We assume that the shader program is already in use.
 func setMouseUniform(
 	window *glfw.Window,
-	shaderProgram shutil.ShaderProgram,
+	shaderProgram glu.ShaderProgram,
 	scale_x float32,
 	scale_y float32,
 ) {
@@ -201,7 +202,7 @@ func setMouseUniform(
 	shaderProgram.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 }
 
-func setTimeUniform(shaderProgram shutil.ShaderProgram, frame uint32) {
+func setTimeUniform(shaderProgram glu.ShaderProgram, frame uint32) {
 	var time float32
 	if frame == 0 {
 		time = 0.0

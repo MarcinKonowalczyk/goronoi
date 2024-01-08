@@ -1,10 +1,11 @@
-package shutil
+package font
 
 import (
 	"fmt"
 	"image"
 	"image/draw"
 	"io"
+	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/golang/freetype"
@@ -18,8 +19,8 @@ type Font struct {
 	fontChar     map[rune]*character
 	ttf          *truetype.Font
 	scale        int32
-	vertex_array VartexArray
-	program      ShaderProgram
+	vertex_array glu.VartexArray
+	program      glu.ShaderProgram
 	windowWidth  int
 	windowHeight int
 	color        [4]float32
@@ -128,7 +129,7 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 }
 
 // LoadTrueTypeFont builds OpenGL buffers and glyph textures based on a ttf file
-func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high rune) (*Font, error) {
+func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, high rune) (*Font, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -154,10 +155,10 @@ func LoadTrueTypeFont(program ShaderProgram, r io.Reader, scale int32, low, high
 	}
 
 	// Configure VAO/VBO for texture quads
-	gl.GenVertexArrays(1, &f.vertex_array.vao)
-	gl.GenBuffers(1, &f.vertex_array.vbo)
-	gl.BindVertexArray(f.vertex_array.vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.vbo)
+	gl.GenVertexArrays(1, &f.vertex_array.Vao)
+	gl.GenBuffers(1, &f.vertex_array.Vbo)
+	gl.BindVertexArray(f.vertex_array.Vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.Vbo)
 
 	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)
 

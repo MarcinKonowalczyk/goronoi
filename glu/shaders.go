@@ -1,4 +1,4 @@
-package shutil
+package glu
 
 import (
 	"log"

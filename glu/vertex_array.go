@@ -1,4 +1,4 @@
-package shutil
+package glu
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 )
 
 type VartexArray struct {
-	vao  uint32
-	vbo  uint32
+	Vao  uint32
+	Vbo  uint32
 	size int32
 }
 
@@ -37,14 +37,14 @@ func CreateVertexArray(vertices []float32, size int32) VartexArray {
 	gl.BindVertexArray(0)
 
 	return VartexArray{
-		vao:  vao,
-		vbo:  vbo,
+		Vao:  vao,
+		Vbo:  vbo,
 		size: size,
 	}
 }
 
 func (va VartexArray) Bind() {
-	gl.BindVertexArray(va.vao)
+	gl.BindVertexArray(va.Vao)
 }
 
 func (va VartexArray) Unbind() {
@@ -53,7 +53,7 @@ func (va VartexArray) Unbind() {
 
 // Send new data to the VAO.
 func (va VartexArray) BufferData(vertices []float32) {
-	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.Vbo)
 	defer gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
