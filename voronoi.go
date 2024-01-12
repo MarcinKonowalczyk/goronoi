@@ -60,9 +60,6 @@ func main() {
 
 	window.SetKeyCallback(keyCallback)
 
-	// Set window size callback
-	window.SetSizeCallback(windowSizeCallback)
-
 	// Cap the framerate at 60fps
 	glfw.SwapInterval(1)
 
@@ -74,13 +71,6 @@ func main() {
 	}
 
 	font.UpdateResolution(windowWidth, windowHeight)
-	oldWindowSizeCallback := window.SetSizeCallback(nil)
-	newSizeCallback := func(window *glfw.Window, width int, height int) {
-		// fmt.Println("New window size:", width, height)
-		oldWindowSizeCallback(window, width, height)
-		font.UpdateResolution(width, height)
-	}
-	window.SetSizeCallback(newSizeCallback)
 
 	programLoop(window, font)
 }
@@ -119,26 +109,31 @@ func programLoop(window *glfw.Window, font *font.Font) {
 
 	shaderProgram.Use()
 
-	// Augment the windowSizeCallback to update the resolution uniform
-	oldWindowSizeCallback := window.SetSizeCallback(nil)
-	newWindowSizeCallback := func(window *glfw.Window, width int, height int) {
-		oldWindowSizeCallback(window, width, height)
-		scale_x, scale_y := window.GetContentScale()
-		f32_width := float32(float32(width) * scale_x)
-		f32_height := float32(float32(height) * scale_y)
-		shaderProgram.SetUniform2f("u_resolution", [2]float32{f32_width, f32_height})
-	}
-	window.SetSizeCallback(newWindowSizeCallback)
-	newWindowSizeCallback(window, windowWidth, windowHeight)
-
-	setMouseUniform(window, shaderProgram, scale_x, scale_y)
+	mouse_x, mouse_y := window.GetCursorPos()
+	setMouseUniform(mouse_x, mouse_y, shaderProgram, scale_x, scale_y)
 
 	frame := uint32(0)
 	setTimeUniform(shaderProgram, frame)
 
 	font.SetColor(1.0, 1.0, 1.0, 0.8)
 
-	widget := widget.NewWidget(windowWidth, windowHeight)
+	widget := widget.NewWidget(windowWidth, windowHeight, scale_x, scale_y)
+
+	// Set the window size callback. We do this only now because we need the
+	// callback to capture a bunch of references which we only have after we set everything up.
+	windowSizeCallback := func(window *glfw.Window, width int, height int) {
+		scale_x, scale_y := window.GetContentScale()
+		gl.Viewport(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
+		gl.Scissor(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
+		f32_width := float32(float32(width) * scale_x)
+		f32_height := float32(float32(height) * scale_y)
+		shaderProgram.SetUniform2f("u_resolution", [2]float32{f32_width, f32_height})
+		font.UpdateResolution(width, height)
+		widget.SetWindowResolution(width, height)
+	}
+
+	window.SetSizeCallback(windowSizeCallback)
+	windowSizeCallback(window, windowWidth, windowHeight)
 
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
@@ -151,16 +146,16 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		// Set the color to clear the screen with
 
 		// Get current mouse position
-		setMouseUniform(window, shaderProgram, scale_x, scale_y)
+		mouse_x, mouse_y := window.GetCursorPos()
+		setMouseUniform(mouse_x, mouse_y, shaderProgram, scale_x, scale_y)
 		setTimeUniform(shaderProgram, frame)
 
-		// NOTE: We're not calling quad.Bund and Unbind here because we only have one VAO
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		// Draw the text
-		mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
-		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x_f64, mouse_y_f64, frame)
+		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
 
+		widget.SetMouseUniform(mouse_x, mouse_y)
 		// Draw the widget
 		widget.Draw()
 
@@ -188,20 +183,14 @@ func keyCallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Ac
 	}
 }
 
-func windowSizeCallback(window *glfw.Window, width int, height int) {
-	scale_x, scale_y := window.GetContentScale()
-	gl.Viewport(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
-	gl.Scissor(0, 0, int32(width)*int32(scale_x), int32(height)*int32(scale_y))
-}
-
 // Set the mouse coordinates uniform. We assume that the shader program is already in use.
 func setMouseUniform(
-	window *glfw.Window,
+	mouse_x_f64 float64,
+	mouse_y_f64 float64,
 	shaderProgram glu.ShaderProgram,
 	scale_x float32,
 	scale_y float32,
 ) {
-	mouse_x_f64, mouse_y_f64 := window.GetCursorPos()
 	mouse_x := float32(mouse_x_f64 * float64(scale_x))
 	mouse_y := float32(mouse_y_f64 * float64(scale_y))
 	shaderProgram.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
