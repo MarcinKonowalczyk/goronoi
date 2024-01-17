@@ -17,14 +17,18 @@ type Widget struct {
 	mouseX    float32
 	mouseY    float32
 	mouseDown bool
+	mouseOver bool
 
 	mouseXPrev    float32
 	mouseYPrev    float32
 	mouseDownPrev bool
+	mouseOverPrev bool
 
-	// // The position of the widget top left corner in screen coordinates
-	// x int
-	// y int
+	// The position of the widget
+	// x      float32
+	// y      float32
+	// width  float32
+	// height float32
 
 	// The color of the widget
 	color [4]float32
@@ -53,7 +57,8 @@ out vec4 color;
 uniform vec2 u_resolution;
 uniform vec4 u_color;
 uniform vec2 u_mouse;
-uniform int u_mouse_down;
+uniform bool u_mouse_down;
+uniform bool u_mouse_over;
 
 void main()
 {
@@ -63,7 +68,7 @@ void main()
 
 	float mouse_dist = distance(st, mouse);
 	if (mouse_dist < 0.1) {
-		if (u_mouse_down == 1) {
+		if (u_mouse_down) {
 			// Yellow
 			color = vec4(1.0, 1.0, 0.0, 0.5);
 		} else {
@@ -71,7 +76,11 @@ void main()
 			color = vec4(1.0, 0.0, 0.0, 0.5);
 		}
 	} else {
-		color = u_color;
+		if (u_mouse_over) {
+				color = vec4(u_color.rgb, 1.0);
+			} else {
+				color = vec4(u_color.rgb, 0.5);
+		}
 	}
 
 }
@@ -93,6 +102,7 @@ func NewWidget() *Widget {
 
 	w.vertex_array = glu.NewVertexArray(2)
 
+	// Default position of the widget
 	quad_vertices := []float32{
 		-0.8, 0.8,
 		-0.8, 0.2,
@@ -138,14 +148,26 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
 	w.mouseDown = mouse_down != 0
 
+	// Update the mouse over state
+	// mouse_over := w.mouseX < 100
+	mouse_over := false
+	w.mouseOverPrev = w.mouseOver
+
+	w.mouseOver = mouse_over
+
 	// Set the shader uniforms
 	mouse_x := float32(mouse_x_f64 * float64(w.scaleX))
 	mouse_y := float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
+	mouse_over_int := 0
+	if mouse_over {
+		mouse_over_int = 1
+	}
 
 	w.program.Use()
 	defer w.program.Unuse()
 	w.program.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 	w.program.SetUniform1i("u_mouse_down", int32(mouse_down))
+	w.program.SetUniform1i("u_mouse_over", int32(mouse_over_int))
 }
 
 func (w *Widget) Draw() {
