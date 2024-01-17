@@ -143,10 +143,12 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		shaderProgram.Use()
 		quad.Bind()
 
-		// Set the color to clear the screen with
-
 		// Get current mouse position
 		mouse_x, mouse_y := window.GetCursorPos()
+
+		// Get whether the mouse button is pressed
+		mouse_button := window.GetMouseButton(glfw.MouseButtonLeft)
+
 		setMouseUniform(mouse_x, mouse_y, shaderProgram, scale_x, scale_y)
 		setTimeUniform(shaderProgram, frame)
 
@@ -155,7 +157,7 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		// Draw the text
 		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
 
-		widget.SetMouseUniform(mouse_x, mouse_y)
+		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
 		// Draw the widget
 		widget.Draw()
 

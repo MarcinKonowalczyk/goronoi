@@ -13,13 +13,14 @@ type Widget struct {
 	scaleX       float32
 	scaleY       float32
 
+	// Mouse position in screen coordinates
+	mouseX    float32
+	mouseY    float32
+	mouseDown bool
+
 	// The position of the widget top left corner in screen coordinates
 	x int
 	y int
-
-	// The size of the widget in screen coordinates
-	width  int
-	height int
 
 	// The color of the widget
 	color [4]float32
@@ -51,6 +52,7 @@ out vec4 color;
 uniform vec2 u_resolution;
 uniform vec4 u_color;
 uniform vec2 u_mouse;
+uniform int u_mouse_down;
 
 void main()
 {
@@ -60,7 +62,13 @@ void main()
 
 	float mouse_dist = distance(st, mouse);
 	if (mouse_dist < 0.1) {
-		color = vec4(1.0, 0.0, 0.0, 0.5);
+		if (u_mouse_down == 1) {
+			// Yellow
+			color = vec4(1.0, 1.0, 0.0, 0.5);
+		} else {
+			// Red
+			color = vec4(1.0, 0.0, 0.0, 0.5);
+		}
 	} else {
 		color = u_color;
 	}
@@ -85,6 +93,9 @@ func NewWidget(windowWidth int, windowHeight int, scaleX float32, scaleY float32
 		windowHeight: windowHeight,
 		scaleX:       scaleX,
 		scaleY:       scaleY,
+		mouseX:       0.0,
+		mouseY:       0.0,
+		mouseDown:    false,
 		color:        [4]float32{1.0, 1.0, 1.0, 1.0},
 		program:      program,
 	}
@@ -133,14 +144,19 @@ func (w *Widget) SetWindowResolution(width int, height int) {
 	w.program.SetUniform2f("u_resolution", [2]float32{float32(w.windowWidth), float32(w.windowHeight)})
 }
 
-func (w *Widget) SetMouseUniform(mouse_x_f64 float64, mouse_y_f64 float64) {
+func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down int) {
 	w.program.Use()
 	defer w.program.Unuse()
+
+	w.mouseX = float32(mouse_x_f64 * float64(w.scaleX))
+	w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
+	w.mouseDown = mouse_down != 0
 
 	mouse_x := float32(mouse_x_f64 * float64(w.scaleX))
 	mouse_y := float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
 
 	w.program.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
+	w.program.SetUniform1i("u_mouse_down", int32(mouse_down))
 }
 
 func (w *Widget) Draw() {
