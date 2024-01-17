@@ -18,6 +18,10 @@ type Widget struct {
 	mouseY    float32
 	mouseDown bool
 
+	mouseXPrev    float32
+	mouseYPrev    float32
+	mouseDownPrev bool
+
 	// The position of the widget top left corner in screen coordinates
 	x int
 	y int
@@ -145,16 +149,23 @@ func (w *Widget) SetWindowResolution(width int, height int) {
 }
 
 func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down int) {
-	w.program.Use()
-	defer w.program.Unuse()
 
+	// Update the previous mouse state
+	w.mouseXPrev = w.mouseX
+	w.mouseYPrev = w.mouseY
+	w.mouseDownPrev = w.mouseDown
+
+	// Update the current mouse state
 	w.mouseX = float32(mouse_x_f64 * float64(w.scaleX))
 	w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
 	w.mouseDown = mouse_down != 0
 
+	// Set the shader uniforms
 	mouse_x := float32(mouse_x_f64 * float64(w.scaleX))
 	mouse_y := float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
 
+	w.program.Use()
+	defer w.program.Unuse()
 	w.program.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 	w.program.SetUniform1i("u_mouse_down", int32(mouse_down))
 }
@@ -165,5 +176,4 @@ func (w *Widget) Draw() {
 
 	w.vertex_array.Bind()
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-
 }
