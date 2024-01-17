@@ -117,7 +117,7 @@ func programLoop(window *glfw.Window, font *font.Font) {
 
 	font.SetColor(1.0, 1.0, 1.0, 0.8)
 
-	widget := widget.NewWidget(windowWidth, windowHeight, scale_x, scale_y)
+	widget := widget.NewWidget()
 
 	// Set the window size callback. We do this only now because we need the
 	// callback to capture a bunch of references which we only have after we set everything up.
@@ -129,7 +129,7 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		f32_height := float32(float32(height) * scale_y)
 		shaderProgram.SetUniform2f("u_resolution", [2]float32{f32_width, f32_height})
 		font.UpdateResolution(width, height)
-		widget.SetWindowResolution(width, height)
+		widget.SetWindow(width, height, scale_x, scale_y)
 	}
 
 	window.SetSizeCallback(windowSizeCallback)
@@ -158,6 +158,7 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
 
 		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
+
 		// Draw the widget
 		widget.Draw()
 

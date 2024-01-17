@@ -22,9 +22,9 @@ type Widget struct {
 	mouseYPrev    float32
 	mouseDownPrev bool
 
-	// The position of the widget top left corner in screen coordinates
-	x int
-	y int
+	// // The position of the widget top left corner in screen coordinates
+	// x int
+	// y int
 
 	// The color of the widget
 	color [4]float32
@@ -33,9 +33,6 @@ type Widget struct {
 	program      glu.ShaderProgram
 	vertex_array glu.VartexArray
 }
-
-// For now we'll just work on drawing a simple rectangle which can be
-// dragged around the screen and resized. No content yet.
 
 var widgetVertexShader = `
 #version 330 core
@@ -80,7 +77,7 @@ void main()
 }
 `
 
-func newWidgetProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
+func newWidgetProgram() glu.ShaderProgram {
 	shaders := []glu.Shader{
 		glu.CompileShader(widgetVertexShader, glu.VERTEX_SHADER),
 		glu.CompileShader(widgetFragmentShader, glu.FRAGMENT_SHADER),
@@ -89,20 +86,10 @@ func newWidgetProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
 	return glu.LinkShaders(shaders)
 }
 
-func NewWidget(windowWidth int, windowHeight int, scaleX float32, scaleY float32) *Widget {
-	program := newWidgetProgram(windowWidth, windowHeight)
+func NewWidget() *Widget {
+	program := newWidgetProgram()
 
-	w := &Widget{
-		windowWidth:  windowWidth,
-		windowHeight: windowHeight,
-		scaleX:       scaleX,
-		scaleY:       scaleY,
-		mouseX:       0.0,
-		mouseY:       0.0,
-		mouseDown:    false,
-		color:        [4]float32{1.0, 1.0, 1.0, 1.0},
-		program:      program,
-	}
+	w := &Widget{program: program}
 
 	w.vertex_array = glu.NewVertexArray(2)
 
@@ -114,9 +101,7 @@ func NewWidget(windowWidth int, windowHeight int, scaleX float32, scaleY float32
 	}
 
 	w.vertex_array.BufferData(quad_vertices)
-
 	w.SetColor(1.0, 1.0, 1.0, 1.0)
-	w.SetWindowResolution(windowWidth, windowHeight)
 
 	return w
 }
@@ -129,27 +114,20 @@ func (w *Widget) SetColor(red float32, green float32, blue float32, alpha float3
 	w.color = color
 }
 
-// func (w *Widget) UpdateResolution(windowWidth int, windowHeight int) {
-// 	w.windowWidth = windowWidth
-// 	w.windowHeight = windowHeight
-// }
-
-func (w *Widget) SetPosition(x int, y int) {
-	w.x = x
-	w.y = y
-}
-
-func (w *Widget) SetWindowResolution(width int, height int) {
-	w.program.Use()
-	defer w.program.Unuse()
-
+// Set all the stuff to do with the window size.
+func (w *Widget) SetWindow(width int, height int, scale_x float32, scale_y float32) {
 	w.windowWidth = width
 	w.windowHeight = height
+	w.scaleX = scale_x
+	w.scaleY = scale_y
+
+	w.program.Use()
+	defer w.program.Unuse()
 	w.program.SetUniform2f("u_resolution", [2]float32{float32(w.windowWidth), float32(w.windowHeight)})
 }
 
+// Set the mouse position and state.
 func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down int) {
-
 	// Update the previous mouse state
 	w.mouseXPrev = w.mouseX
 	w.mouseYPrev = w.mouseY
