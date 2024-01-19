@@ -137,13 +137,16 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	w.mouseDownPrev = w.mouseDown
 
 	// Update the current mouse state
-	w.mouseX = float32(mouse_x_f64 * float64(w.scaleX))
-	w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
+	// w.mouseX = float32(mouse_x_f64 * float64(w.scaleX))
+	// w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
+	// w.mouseY = float32(mouse_y_f64) - float32(w.windowHeight)
+	w.mouseX = float32(mouse_x_f64)
+	w.mouseY = float32(mouse_y_f64)
 	w.mouseDown = mouse_down != 0
 
 	// Update the mouse over state
-	// mouse_over := w.mouseX < 100
-	mouse_over := false
+	// fmt.Println(w.mouseY, w.y)
+	mouse_over := (w.mouseX > w.x) && (w.mouseX < (w.x + w.width)) && (w.mouseY > w.y) && (w.mouseY < (w.y + w.height))
 	w.mouseOverPrev = w.mouseOver
 
 	w.mouseOver = mouse_over
