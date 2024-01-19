@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"fmt"
 	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -144,8 +143,14 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	w.mouseY = float32(mouse_y_f64)
 	w.mouseDown = mouse_down != 0
 
+	// Maybe move the window
+	// if w.mouseDown && w.mouseDownPrev && w.mouseOver && w.mouseOverPrev {
+	// 	delta_x := w.mouseX - w.mouseXPrev
+	// 	delta_y := w.mouseY - w.mouseYPrev
+	// 	w.SetPosition(w.x+delta_x, w.y+delta_y, w.width, w.height)
+	// }
+
 	// Update the mouse over state
-	// fmt.Println(w.mouseY, w.y)
 	mouse_over := (w.mouseX > w.x) && (w.mouseX < (w.x + w.width)) && (w.mouseY > w.y) && (w.mouseY < (w.y + w.height))
 	w.mouseOverPrev = w.mouseOver
 
@@ -194,11 +199,6 @@ func (w *Widget) SetPosition(
 		t(xn + wn), -t(yn),
 		t(xn + wn), -t(yn + hn),
 	}
-
-	fmt.Println(quad_vertices)
-
-	fmt.Println(quad_vertices)
-
 	w.vertex_array.BufferData(quad_vertices)
 }
 
