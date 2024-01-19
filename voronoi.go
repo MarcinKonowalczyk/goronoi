@@ -135,6 +135,8 @@ func programLoop(window *glfw.Window, font *font.Font) {
 	window.SetSizeCallback(windowSizeCallback)
 	windowSizeCallback(window, windowWidth, windowHeight)
 
+	widget.SetPosition(80, 80, 200, 300)
+
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
 		glfw.PollEvents()

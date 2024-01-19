@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"fmt"
 	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -25,10 +26,10 @@ type Widget struct {
 	mouseOverPrev bool
 
 	// The position of the widget
-	// x      float32
-	// y      float32
-	// width  float32
-	// height float32
+	x      float32
+	y      float32
+	width  float32
+	height float32
 
 	// The color of the widget
 	color [4]float32
@@ -102,15 +103,7 @@ func NewWidget() *Widget {
 
 	w.vertex_array = glu.NewVertexArray(2)
 
-	// Default position of the widget
-	quad_vertices := []float32{
-		-0.8, 0.8,
-		-0.8, 0.2,
-		-0.2, 0.8,
-		-0.2, 0.2,
-	}
-
-	w.vertex_array.BufferData(quad_vertices)
+	// w.vertex_array.BufferData(quad_vertices)
 	w.SetColor(1.0, 1.0, 1.0, 1.0)
 
 	return w
@@ -168,6 +161,42 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	w.program.SetUniform2f("u_mouse", [2]float32{mouse_x, mouse_y})
 	w.program.SetUniform1i("u_mouse_down", int32(mouse_down))
 	w.program.SetUniform1i("u_mouse_over", int32(mouse_over_int))
+}
+
+func (w *Widget) SetPosition(
+	x float32,
+	y float32,
+	width float32,
+	height float32,
+) {
+
+	// y = float32(w.windowWidth) - y
+	w.x = x
+	w.y = y
+	w.width = width
+	w.height = height
+
+	// Calculate the position in screen units and send them over to the buffer array
+	xn := w.x / float32(w.windowWidth)
+	yn := w.y / float32(w.windowHeight)
+	wn := w.width / float32(w.windowWidth)
+	hn := w.height / float32(w.windowHeight)
+
+	t := func(x float32) float32 { return (x - 0.5) * 2 }
+
+	// Default position of the widget
+	quad_vertices := []float32{
+		t(xn), -t(yn),
+		t(xn), -t(yn + hn),
+		t(xn + wn), -t(yn),
+		t(xn + wn), -t(yn + hn),
+	}
+
+	fmt.Println(quad_vertices)
+
+	fmt.Println(quad_vertices)
+
+	w.vertex_array.BufferData(quad_vertices)
 }
 
 func (w *Widget) Draw() {
