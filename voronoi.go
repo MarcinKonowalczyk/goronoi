@@ -7,9 +7,9 @@ import (
 	"voronoi/glu/font"
 	"voronoi/glu/widget"
 
+	"github.com/go-fonts/dejavu/dejavusansmono"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"golang.org/x/image/font/gofont/gomono"
 
 	_ "embed"
 )
@@ -83,8 +83,7 @@ func programLoop(window *glfw.Window) {
 	monitor := glfw.GetPrimaryMonitor()
 	scale_x, scale_y := monitor.GetContentScale()
 
-	// Load the font
-	font, err := font.NewFont(gomono.TTF, 12, scale_x, scale_y)
+	font, err := font.NewFont(dejavusansmono.TTF, 12, scale_x, scale_y)
 	if err != nil {
 		log.Panicf("LoadFont: %v", err)
 	}
@@ -157,7 +156,7 @@ func programLoop(window *glfw.Window) {
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		// Draw the text
-		font.Printf(-0.98, 0.98, 1.2, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
+		font.Printf(-0.97, 0.97, 1.2, "Mouse: %07.1f, %07.1f Frame: %07v", mouse_x, mouse_y, frame)
 
 		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
 

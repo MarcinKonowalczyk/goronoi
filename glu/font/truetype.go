@@ -25,6 +25,9 @@ type Font struct {
 	// Font upscaling factor. This is to compensate for high DPI monitors where content scale is > 1.
 	upscale float32
 
+	// // Font compression factor
+	// x_condense float32
+
 	vertex_array glu.VartexArray
 	program      glu.ShaderProgram
 	windowWidth  int
