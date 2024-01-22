@@ -85,6 +85,9 @@ func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
 	f.windowHeight = windowHeight
 }
 
+// Magic number to make the font look the same as rendered in vscode
+const _MAGIC = 1.035
+
 // Printf draws a string to the screen, takes a list of arguments like printf
 func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...interface{}) error {
 
@@ -138,8 +141,8 @@ func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...
 		// calculate position and size for current rune
 		xpos := x + float32(ch.bearingH)*scale
 		ypos := y - float32(ch.height-ch.bearingV)*scale
-		w := float32(ch.width) * scale * 0.86
-		h := float32(ch.height) * scale * 0.86
+		w := float32(ch.width) * scale * _MAGIC
+		h := float32(ch.height) * scale * _MAGIC
 
 		// order: bottom left, top left, bottom right, top right
 		vertices := []float32{
@@ -152,7 +155,7 @@ func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...
 		gl.BindTexture(gl.TEXTURE_2D, ch.textureID)
 		f.vertex_array.BufferData(vertices)
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-		x += float32((ch.advance >> 6)) * scale * 0.86
+		x += float32((ch.advance >> 6)) * scale * _MAGIC
 	}
 
 	return nil

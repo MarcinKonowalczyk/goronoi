@@ -160,7 +160,7 @@ func programLoop(window *glfw.Window) {
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		// Draw the text
-		font.Printf(-0.97, 0.97, 1.2, "Mouse: %07.1f, %07.1f Frame: %07v", mouse_x, mouse_y, frame)
+		font.Printf(-0.97, 0.97, 1.0, "Mouse: %07.1f, %07.1f Frame: %07v", mouse_x, mouse_y, frame)
 
 		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
 
