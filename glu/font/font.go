@@ -16,7 +16,7 @@ var fontFragmentShaderSource string
 //go:embed font.vert
 var fontVertexShaderSource string
 
-func newFontProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
+func newFontProgram() glu.ShaderProgram {
 	shaders := []glu.Shader{
 		glu.CompileShader(fontVertexShaderSource, glu.VERTEX_SHADER),
 		glu.CompileShader(fontFragmentShaderSource, glu.FRAGMENT_SHADER),
@@ -25,17 +25,22 @@ func newFontProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
 	return glu.LinkShaders(shaders)
 }
 
-// Loads the specified font bytes at the given scale.
-func NewFont(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
-	program := newFontProgram(windowWidth, windowHeight)
+// Loads the specified font bytes at the given scale. We need the monitor scale to adjust the font size.
+func NewFont(buf []byte, scale int32, scaleX float32, scaleY float32) (*Font, error) {
+
+	program := newFontProgram()
+
+	upscale := max(scaleX, scaleY)
+	if upscale == 0 {
+		upscale = 1
+	}
 
 	fd := bytes.NewReader(buf)
-	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
+	f, err := LoadTrueTypeFont(program, fd, scale, upscale, 32, 127)
 	if err != nil {
 		return nil, err
 	}
 
-	f.UpdateResolution(windowWidth, windowHeight)
 	f.SetColor(1.0, 1.0, 1.0, 1.0) // Set the default color to white
 
 	return f, nil
@@ -83,6 +88,7 @@ func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
 // Printf draws a string to the screen, takes a list of arguments like printf
 func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...interface{}) error {
 
+	scale = scale / f.upscale
 	indices := []rune(fmt.Sprintf(fs, argv...))
 
 	if len(indices) == 0 {

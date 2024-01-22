@@ -63,16 +63,7 @@ func main() {
 	// Cap the framerate at 60fps
 	glfw.SwapInterval(1)
 
-	// Load the font
-
-	font, err := font.NewFont(gomono.TTF, int32(32), windowWidth, windowHeight)
-	if err != nil {
-		log.Panicf("LoadFont: %v", err)
-	}
-
-	font.UpdateResolution(windowWidth, windowHeight)
-
-	programLoop(window, font)
+	programLoop(window)
 }
 
 func compileShaders() []glu.Shader {
@@ -85,7 +76,21 @@ func compileShaders() []glu.Shader {
 	return []glu.Shader{vertexShader, fragmentShader}
 }
 
-func programLoop(window *glfw.Window, font *font.Font) {
+func programLoop(window *glfw.Window) {
+
+	// Scale the resolution to the monitor's content scale
+	// This is necessary for retina displays
+	monitor := glfw.GetPrimaryMonitor()
+	scale_x, scale_y := monitor.GetContentScale()
+
+	// Load the font
+	font, err := font.NewFont(gomono.TTF, 12, scale_x, scale_y)
+	if err != nil {
+		log.Panicf("LoadFont: %v", err)
+	}
+
+	font.UpdateResolution(windowWidth, windowHeight)
+
 	// the linked shader program determines how the data will be rendered
 	shaders := compileShaders()
 	shaderProgram := glu.LinkShaders(shaders)
@@ -101,11 +106,6 @@ func programLoop(window *glfw.Window, font *font.Font) {
 	quad := glu.NewVertexArray(2)
 	quad.BufferData(quad_vertices)
 	quad.Bind()
-
-	// Scale the resolution to the monitor's content scale
-	// This is necessary for retina displays
-	monitor := glfw.GetPrimaryMonitor()
-	scale_x, scale_y := monitor.GetContentScale()
 
 	shaderProgram.Use()
 
@@ -157,7 +157,7 @@ func programLoop(window *glfw.Window, font *font.Font) {
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		// Draw the text
-		font.Printf(-0.98, 0.98, 0.5, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
+		font.Printf(-0.98, 0.98, 1.0, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
 
 		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
 
