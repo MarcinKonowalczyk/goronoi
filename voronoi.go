@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"runtime"
 	"voronoi/glu"
@@ -57,6 +58,9 @@ func main() {
 
 	// Initialize gl in the glu package
 	glu.Init()
+
+	opengl_info := glu.GetOpenGLInfo()
+	fmt.Println(opengl_info)
 
 	window.SetKeyCallback(keyCallback)
 
