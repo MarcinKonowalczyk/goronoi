@@ -135,7 +135,7 @@ func programLoop(window *glfw.Window) {
 	window.SetSizeCallback(windowSizeCallback)
 	windowSizeCallback(window, windowWidth, windowHeight)
 
-	widget.SetPosition(80, 80, 200, 300)
+	widget.SetPosition(-0.8, -0.8, 200, 300)
 
 	for !window.ShouldClose() {
 		// poll events and call their registered callbacks
@@ -157,7 +157,7 @@ func programLoop(window *glfw.Window) {
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		// Draw the text
-		font.Printf(-0.98, 0.98, 1.0, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
+		font.Printf(-0.98, 0.98, 1.2, "Mouse: %07.1f, %07.1f. Frame: %07v", mouse_x, mouse_y, frame)
 
 		widget.SetMouse(mouse_x, mouse_y, int(mouse_button))
 

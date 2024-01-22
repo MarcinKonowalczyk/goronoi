@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"fmt"
 	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -24,7 +25,7 @@ type Widget struct {
 	mouseDownPrev bool
 	mouseOverPrev bool
 
-	// The position of the widget
+	// The position of the widget. x and y are in screen coordinates. width and height are in pixels.
 	x      float32
 	y      float32
 	width  float32
@@ -139,6 +140,7 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	// w.mouseX = float32(mouse_x_f64 * float64(w.scaleX))
 	// w.mouseY = float32(mouse_y_f64*float64(w.scaleY)) - float32(w.windowHeight)
 	// w.mouseY = float32(mouse_y_f64) - float32(w.windowHeight)
+	fmt.Println(mouse_x_f64)
 	w.mouseX = float32(mouse_x_f64)
 	w.mouseY = float32(mouse_y_f64)
 	w.mouseDown = mouse_down != 0
@@ -151,7 +153,11 @@ func (w *Widget) SetMouse(mouse_x_f64 float64, mouse_y_f64 float64, mouse_down i
 	// }
 
 	// Update the mouse over state
-	mouse_over := (w.mouseX > w.x) && (w.mouseX < (w.x + w.width)) && (w.mouseY > w.y) && (w.mouseY < (w.y + w.height))
+	x_pixels := (w.x + 1) / 2 * float32(w.windowWidth)
+	y_pixels := (w.y + 1) / 2 * float32(w.windowHeight)
+	// fmt.Println(x_pixels, y_pixels)
+	// mouse_over := (w.mouseX > w.x) && (w.mouseX < (w.x + w.width)) && (w.mouseY > w.y) && (w.mouseY < (w.y + w.height))
+	mouse_over := (w.mouseX > x_pixels) && (w.mouseX < (x_pixels + w.width)) && (w.mouseY > y_pixels) && (w.mouseY < (y_pixels + w.height))
 	w.mouseOverPrev = w.mouseOver
 
 	w.mouseOver = mouse_over
@@ -185,8 +191,8 @@ func (w *Widget) SetPosition(
 	w.height = height
 
 	// Calculate the position in screen units and send them over to the buffer array
-	xn := w.x / float32(w.windowWidth)
-	yn := w.y / float32(w.windowHeight)
+	xn := (w.x + 1) / 2.0
+	yn := (w.y + 1) / 2.0
 	wn := w.width / float32(w.windowWidth)
 	hn := w.height / float32(w.windowHeight)
 
