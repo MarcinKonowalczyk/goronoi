@@ -16,9 +16,18 @@ import (
 
 // A Font allows rendering of text to an OpenGL context.
 type Font struct {
-	fontChar     map[rune]*character
-	ttf          *truetype.Font
-	scale        int32
+	fontChar map[rune]*character
+	ttf      *truetype.Font
+
+	// Font size in pixels. 12 is a good default.
+	size int32
+
+	// Font upscaling factor. This is to compensate for high DPI monitors where content scale is > 1.
+	upscale float32
+
+	// // Font compression factor
+	// x_condense float32
+
 	vertex_array glu.VartexArray
 	program      glu.ShaderProgram
 	windowWidth  int
@@ -39,19 +48,19 @@ type character struct {
 func (f *Font) GenerateGlyphs(low, high rune) error {
 	//create a freetype context for drawing
 	c := freetype.NewContext()
-	c.SetDPI(72)
+	c.SetDPI(float64(72 * f.upscale))
 	c.SetFont(f.ttf)
-	c.SetFontSize(float64(f.scale))
+	c.SetFontSize(float64(f.size))
 	c.SetHinting(font.HintingFull)
 
-	//create new face to measure glyph dimensions
+	// Create new face to measure glyph dimensions
 	ttfFace := truetype.NewFace(f.ttf, &truetype.Options{
-		Size:    float64(f.scale),
-		DPI:     72,
+		Size:    float64(f.size),
+		DPI:     float64(72 * f.upscale),
 		Hinting: font.HintingFull,
 	})
 
-	//make each gylph
+	// Make each glyph
 	for ch := low; ch <= high; ch++ {
 		char := new(character)
 
@@ -63,13 +72,13 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 		gh := int32((gBnd.Max.Y - gBnd.Min.Y) >> 6)
 		gw := int32((gBnd.Max.X - gBnd.Min.X) >> 6)
 
-		//if gylph has no dimensions set to a max value
+		// If glyph has no dimensions set to a max value
 		if gw == 0 || gh == 0 {
-			gBnd = f.ttf.Bounds(fixed.Int26_6(f.scale))
+			gBnd = f.ttf.Bounds(fixed.Int26_6(f.size))
 			gw = int32((gBnd.Max.X - gBnd.Min.X) >> 6)
 			gh = int32((gBnd.Max.Y - gBnd.Min.Y) >> 6)
 
-			//above can sometimes yield 0 for font smaller than 48pt, 1 is minimum
+			// Above can sometimes yield 0 for font smaller than 48pt, 1 is minimum
 			if gw == 0 || gh == 0 {
 				gw = 1
 				gh = 1
@@ -129,7 +138,13 @@ func (f *Font) GenerateGlyphs(low, high rune) error {
 }
 
 // LoadTrueTypeFont builds OpenGL buffers and glyph textures based on a ttf file
-func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, high rune) (*Font, error) {
+func LoadTrueTypeFont(
+	program glu.ShaderProgram,
+	r io.Reader,
+	size int32,
+	upscale float32,
+	low, high rune,
+) (*Font, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -142,12 +157,13 @@ func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, 
 	}
 
 	//make Font stuct type
-	f := new(Font)
-	f.fontChar = make(map[rune]*character)
-	f.ttf = ttf
-	f.scale = scale
-	f.program = program            //set shader program
-	f.SetColor(1.0, 1.0, 1.0, 1.0) //set default white
+	f := &Font{
+		fontChar: make(map[rune]*character),
+		ttf:      ttf,
+		size:     size,
+		upscale:  upscale,
+		program:  program,
+	}
 
 	err = f.GenerateGlyphs(low, high)
 	if err != nil {
@@ -160,7 +176,7 @@ func LoadTrueTypeFont(program glu.ShaderProgram, r io.Reader, scale int32, low, 
 	gl.BindVertexArray(f.vertex_array.Vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, f.vertex_array.Vbo)
 
-	gl.BufferData(gl.ARRAY_BUFFER, 6*4*4, nil, gl.STATIC_DRAW)
+	// gl.BufferData(gl.ARRAY_BUFFER, 0*4*4, nil, gl.STATIC_DRAW)
 
 	vertAttrib := program.GetAttribLocation("vert")
 	gl.EnableVertexAttribArray(vertAttrib)

@@ -7,40 +7,33 @@ import (
 )
 
 type VartexArray struct {
-	Vao  uint32
-	Vbo  uint32
-	size int32
+	Vao uint32
+	Vbo uint32
 }
 
 // Create a Vertex Array Object (VAO) for the given vertices.
 // Returns the VAO ID.
-func CreateVertexArray(vertices []float32, size int32) VartexArray {
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
+func NewVertexArray(size int32) (va VartexArray) {
+	gl.GenVertexArrays(1, &va.Vao)
+	gl.GenBuffers(1, &va.Vbo)
 
 	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointers()
-	gl.BindVertexArray(vao)
+	gl.BindVertexArray(va.Vao)
 
 	// copy vertices data into VBO (it needs to be bound first)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.Vbo)
+	// gl.BufferData(gl.ARRAY_BUFFER, 0, nil, gl.STATIC_DRAW)
 
 	// specify the format of our vertex input
 	stride := int32(size * 4) // 4 bytes per float32
-	gl.VertexAttribPointer(0, size, gl.FLOAT, false, stride, nil)
 	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointerWithOffset(0, size, gl.FLOAT, false, stride, 0)
+	defer gl.DisableVertexAttribArray(0)
 
 	// unbind the VAO (safe practice so we don't accidentally (mis)configure it later)
 	gl.BindVertexArray(0)
 
-	return VartexArray{
-		Vao:  vao,
-		Vbo:  vbo,
-		size: size,
-	}
+	return va
 }
 
 func (va VartexArray) Bind() {

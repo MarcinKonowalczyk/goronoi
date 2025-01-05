@@ -3,7 +3,6 @@ package font
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"voronoi/glu"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -12,48 +11,61 @@ import (
 )
 
 //go:embed font.frag
-var fragmentFontShader string
+var fontFragmentShaderSource string
 
 //go:embed font.vert
-var vertexFontShader string
+var fontVertexShaderSource string
 
-func newFontProgram(windowWidth int, windowHeight int) glu.ShaderProgram {
+func newFontProgram() glu.ShaderProgram {
 	shaders := []glu.Shader{
-		glu.CompileShader(vertexFontShader, glu.VERTEX_SHADER),
-		glu.CompileShader(fragmentFontShader, glu.FRAGMENT_SHADER),
+		glu.CompileShader(fontVertexShaderSource, glu.VERTEX_SHADER),
+		glu.CompileShader(fontFragmentShaderSource, glu.FRAGMENT_SHADER),
 	}
 
 	return glu.LinkShaders(shaders)
 }
 
-// LoadFontBytes loads the specified font bytes at the given scale.
-func LoadFontBytes(buf []byte, scale int32, windowWidth int, windowHeight int) (*Font, error) {
-	program := newFontProgram(windowWidth, windowHeight)
+// Loads the specified font bytes at the given scale. We need the monitor scale to adjust the font size.
+func NewFont(buf []byte, scale int32, scaleX float32, scaleY float32) (*Font, error) {
+
+	program := newFontProgram()
+
+	upscale := max(scaleX, scaleY)
+	if upscale == 0 {
+		upscale = 1
+	}
 
 	fd := bytes.NewReader(buf)
-	return LoadTrueTypeFont(program, fd, scale, 32, 127)
-}
-
-// LoadFont loads the specified font at the given scale.
-func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Font, error) {
-	fd, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer fd.Close()
-
-	program := newFontProgram(windowWidth, windowHeight)
-
-	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
+	f, err := LoadTrueTypeFont(program, fd, scale, upscale, 32, 127)
 	if err != nil {
 		return nil, err
 	}
 
-	f.UpdateResolution(windowWidth, windowHeight)
 	f.SetColor(1.0, 1.0, 1.0, 1.0) // Set the default color to white
 
 	return f, nil
 }
+
+// // LoadFont loads the specified font at the given scale.
+// func LoadFont(file string, scale int32, windowWidth int, windowHeight int) (*Font, error) {
+// 	fd, err := os.Open(file)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer fd.Close()
+
+// 	program := newFontProgram(windowWidth, windowHeight)
+
+// 	f, err := LoadTrueTypeFont(program, fd, scale, 32, 127)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	f.UpdateResolution(windowWidth, windowHeight)
+// 	f.SetColor(1.0, 1.0, 1.0, 1.0) // Set the default color to white
+
+// 	return f, nil
+// }
 
 // SetColor allows you to set the text color to be used when you draw the text
 func (f *Font) SetColor(red float32, green float32, blue float32, alpha float32) {
@@ -73,9 +85,13 @@ func (f *Font) UpdateResolution(windowWidth int, windowHeight int) {
 	f.windowHeight = windowHeight
 }
 
+// Magic number to make the font look the same as rendered in vscode
+const _MAGIC = 1.035
+
 // Printf draws a string to the screen, takes a list of arguments like printf
 func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...interface{}) error {
 
+	scale = scale / f.upscale
 	indices := []rune(fmt.Sprintf(fs, argv...))
 
 	if len(indices) == 0 {
@@ -125,8 +141,8 @@ func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...
 		// calculate position and size for current rune
 		xpos := x + float32(ch.bearingH)*scale
 		ypos := y - float32(ch.height-ch.bearingV)*scale
-		w := float32(ch.width) * scale
-		h := float32(ch.height) * scale
+		w := float32(ch.width) * scale * _MAGIC
+		h := float32(ch.height) * scale * _MAGIC
 
 		// order: bottom left, top left, bottom right, top right
 		vertices := []float32{
@@ -139,7 +155,7 @@ func (f *Font) Printf(x_norm, y_norm float32, scale float32, fs string, argv ...
 		gl.BindTexture(gl.TEXTURE_2D, ch.textureID)
 		f.vertex_array.BufferData(vertices)
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-		x += float32((ch.advance >> 6)) * scale
+		x += float32((ch.advance >> 6)) * scale * _MAGIC
 	}
 
 	return nil

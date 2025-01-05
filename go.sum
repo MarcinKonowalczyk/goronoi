@@ -1,3 +1,5 @@
+github.com/go-fonts/dejavu v0.3.3 h1:YZxbkwCBqVC0BojBvGdDdQuDqtm0oRs95eGhSPYbTvg=
+github.com/go-fonts/dejavu v0.3.3/go.mod h1:EpsVvJxpY/lRM2MbkThHF/5161F8YZdBFIC9uT3/Uqc=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20231223183121-56fa3ac82ce7 h1:7tf/0aw5DxRQjr7WaNqgtjidub6v21L2cogKIbMcTYw=
